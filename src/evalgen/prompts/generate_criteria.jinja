@@ -1,0 +1,28 @@
+You are an AI assistant helping to evaluate the outputs of a large language model (LLM).
+Given the following prompt, generate a list of binary evaluation criteria that could be used to assess the quality of the LLM's responses.
+Respond with a numbered list only, one criterion per line, each formatted as "Short Title: one-sentence description", with no headings or commentary.
+--------- END SYSTEM PROMPT ---------
+
+Prompt:
+{{ prompt }}
+{% if graded %}
+The developer graded some responses to this prompt. Use them to find what separates good responses from bad ones.
+{% for item in graded %}
+<Response grade="{{ 'good' if item.good else 'bad' }}">
+{{ item.output }}
+</Response>{% if item.feedback %}
+Developer feedback: {{ item.feedback }}{% endif %}
+{% endfor %}{% endif %}
+{% if existing %}
+These criteria already exist, so suggest different ones:
+{% for title in existing %}- {{ title }}
+{% endfor %}{% endif %}
+Example Evaluation Criteria:
+1. Factually Correct: The response should be factually correct.
+2. Relevant: The response should be relevant to the prompt.
+3. Grammatical: The response should be free from grammatical errors.
+4. Concise: The response should be concise and to the point.
+5. Coherent: The response should be coherent and logically structured.
+6. Appropriate Language: The response should not contain any offensive language or inappropriate content.
+
+Please generate a list of criteria that are relevant to the task described in the prompt.

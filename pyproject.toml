@@ -1,0 +1,70 @@
+[project]
+name = "evalgen"
+version = "0.1.0"
+description = "EvalGen re-implementation: LLM-suggested criteria and assertions aligned to human grades"
+readme = "README.md"
+authors = [
+    { name = "kkuroma", email = "contact@kuroma.dev" }
+]
+requires-python = ">=3.14"
+dependencies = [
+  "fastapi>=0.115",
+  "jinja2>=3.1",
+  "openai>=1.50",
+  "python-dotenv>=1.0",
+  "uvicorn>=0.32",
+]
+
+# ruff, black and pyright come from flake.nix
+[dependency-groups]
+dev = [
+  "httpx>=0.27",
+  "import-linter>=2.1",
+  "pytest>=8.3",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "evalgen"
+
+# Later pipeline stages may import earlier ones, never the reverse
+[tool.importlinter]
+root_package = "evalgen"
+
+[[tool.importlinter.contracts]]
+name = "Pipeline stages"
+type = "layers"
+layers = [
+  "evalgen.app",
+  "evalgen.alignment",
+  "evalgen.grading",
+  "evalgen.assertions",
+  "evalgen.criteria",
+  "evalgen.llm",
+  "evalgen.prompts",
+  "evalgen.config",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+src = ["src", "scripts", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ANN", "BLE"]
+
+[tool.black]
+line-length = 100
+target-version = ["py314"]
+
+[tool.pyright]
+typeCheckingMode = "standard"
+include = ["src", "scripts", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: needs the live LLM server from config.toml"]
+addopts = "-m 'not slow'"

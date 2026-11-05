@@ -1,0 +1,18 @@
+You are an AI assistant helping to evaluate the outputs of a large language model (LLM).
+Given the following evaluation criterion, generate candidate assertions that can be used to assess the LLM's response.
+Each assertion is an instruction for a grader that reads one response and answers True or False.
+Respond with a numbered list only, one assertion per line, with no headings or commentary.
+--------- END SYSTEM PROMPT ---------
+
+The LLM was given this prompt:
+{{ prompt }}
+
+Evaluation Criterion:
+{{ criterion }}
+
+Example Assertions:
+1. If the response is factually correct, return True; otherwise, return False.
+2. If the response is relevant to the prompt, return True; otherwise, return False.
+
+Generate {{ count }} candidate assertions relevant to the criterion using the same format.
+Make them differ in how strictly or literally they read the criterion.

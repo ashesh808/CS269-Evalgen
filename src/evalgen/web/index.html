@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EvalGen</title>
+  <link rel="preload" href="/static/fonts/GoogleSansFlex.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/app.css">
+  <!-- Blocking on purpose: the palette must land before first paint -->
+  <script src="/static/themes.js"></script>
+  <script src="/static/appearance.js"></script>
+  <script defer src="/static/icons.js"></script>
+  <script defer src="/static/app.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-left">
+      <a class="brand" href="#">EvalGen</a>
+      <span class="model-chip" id="server-chip" title="LLM server from config.toml">connecting</span>
+    </div>
+    <div class="navbar-right">
+      <details class="settings-menu" id="settings-menu">
+        <summary class="settings-toggle" title="Appearance">Aa</summary>
+        <div class="settings-body">
+          <div class="settings-label">Palette</div>
+          <div class="settings-row" id="palette-row"></div>
+          <div class="settings-label">Mode</div>
+          <div class="seg" data-group="variant">
+            <button class="seg-btn" data-value="light">Light</button>
+            <button class="seg-btn" data-value="dark">Dark</button>
+            <button class="seg-btn" data-value="system">Auto</button>
+          </div>
+          <div class="settings-label">Text size</div>
+          <div class="seg" data-group="fontSize">
+            <button class="seg-btn" data-value="small">S</button>
+            <button class="seg-btn" data-value="medium">M</button>
+            <button class="seg-btn" data-value="large">L</button>
+            <button class="seg-btn" data-value="xlarge">XL</button>
+          </div>
+        </div>
+      </details>
+    </div>
+  </nav>
+
+  <main class="canvas">
+    <div class="flow">
+      <section class="node" id="prompt-node">
+        <div class="node-head">
+          <span class="node-title" data-icon="message">Prompt Node</span>
+          <span class="node-ok" id="prompt-ok" data-icon="check" title="Responses ready" hidden></span>
+          <button class="tool-btn" id="btn-run" title="Run the prompt" data-icon="play"></button>
+        </div>
+        <div class="node-body">
+          <textarea id="prompt" rows="9" spellcheck="false">Write a product description for the item below, for an online store.
+Keep it under 80 words, upbeat in tone, and do not invent specifications that are not listed.
+
+Item: stainless steel insulated water bottle, 750 ml, keeps drinks cold for 24 hours, leak-proof lid</textarea>
+          <label class="inline-field">Num responses per prompt
+            <input type="number" id="num-responses" min="1" max="10" value="6">
+          </label>
+          <label class="inline-field">Model to query
+            <select class="model-select" id="prompt-model" title="Model that answers the prompt"></select>
+          </label>
+          <div class="node-status" id="prompt-status"></div>
+        </div>
+      </section>
+
+      <div class="wire" aria-hidden="true"><span class="port"></span><span class="wire-line"></span><span class="port"></span></div>
+
+      <section class="node" id="eval-node">
+        <div class="node-head">
+          <span class="node-title" data-icon="list">Multi-Evaluator</span>
+          <select class="model-select" id="eval-model" title="Model that suggests criteria, writes assertions and grades responses"></select>
+        </div>
+        <div class="node-body" id="eval-body"></div>
+      </section>
+    </div>
+
+    <section class="node table-node">
+      <div class="node-head">
+        <span class="node-title" data-icon="table">Table View</span>
+        <span class="node-meta" id="table-meta"></span>
+      </div>
+      <div class="node-body" id="table-body"></div>
+    </section>
+  </main>
+
+  <div class="modal" id="wizard" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="wizard-title">
+      <div class="dialog-head">
+        <span class="dialog-title" id="wizard-title">EvalGen</span>
+        <div class="steps" id="wizard-steps"></div>
+        <button class="tool-btn" id="wizard-close" title="Close" data-icon="x"></button>
+      </div>
+      <div class="dialog-body" id="wizard-body"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+</body>
+</html>
