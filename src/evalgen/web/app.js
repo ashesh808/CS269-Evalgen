@@ -10,7 +10,11 @@ const state = {
   criteria: [],        // { id, title, description, kind, on, keep, assertions, results, errors }
   suggesting: false,
   querying: false,
+  exporting: null,
   datasetGeneration: 0,
+  defaultModel: null,
+  sampleModel: null,
+  sampledAt: null,
   draft: '',           // unsent text in the add-criterion box
   report: null,
   reported: [],        // criterion ids in report order
@@ -47,6 +51,7 @@ const label = (c) => (c.description ? `${c.title}: ${c.description}` : c.title);
 const graded = () => state.responses.filter((r) => r.grade !== null).length;
 const implementing = () => state.criteria.some((c) => c.status === 'generating' || c.status === 'running');
 const kindLabel = (c) => c.kind === 'python' ? 'Code' : 'LLM';
+const canExport = () => state.responses.length > 0 && !state.querying && !state.suggesting && !implementing() && !state.exporting;
 
 function invalidateCriterion(c) {
   c.runId = (c.runId || 0) + 1;
@@ -199,6 +204,7 @@ async function runPrompt() {
   const button = $('btn-run');
   const status = $('prompt-status');
   const count = Math.min(10, Math.max(1, Number($('num-responses').value) || 1));
+  const sampleModel = state.models.prompt || state.defaultModel;
   const generation = ++state.datasetGeneration;
   state.querying = true;
   reportSeq += 1;
@@ -215,9 +221,11 @@ async function runPrompt() {
   status.textContent = `Sampling ${count} responses...`;
   render();
   try {
-    const { outputs } = await api('/api/sample', { prompt, count, model: state.models.prompt });
+    const { outputs } = await api('/api/sample', { prompt, count, model: sampleModel });
     if (generation !== state.datasetGeneration) return;
     state.prompt = prompt;
+    state.sampleModel = sampleModel;
+    state.sampledAt = new Date().toISOString();
     state.responses = outputs.map((text) => ({ text, grade: null, feedback: '' }));
     state.criteria.forEach(invalidateCriterion);
     state.report = null;
@@ -426,6 +434,106 @@ function selectionMessage(criterion, report = reportFor(criterion)) {
     return 'Grade both good and bad responses to measure alignment.';
   }
   return 'No complete candidate meets the false failure threshold.';
+}
+
+// ---------- Local session export ----------
+
+function captureSessionSnapshot() {
+  const criteria = state.criteria.map((c) => {
+    const changed = c.status !== 'draft' && ((c.built != null && c.built !== label(c))
+      || (c.builtKind != null && c.builtKind !== c.kind));
+    return {
+      id: c.id, title: c.title, description: c.description, kind: c.kind,
+      on: c.on, keep: c.keep, status: changed ? 'draft' : c.status,
+      assertions: changed ? [] : c.assertions, results: changed ? null : c.results,
+      errors: changed ? [] : c.errors, error: changed ? '' : c.error,
+      model: c.model, built: c.built, builtKind: c.builtKind,
+      completed: changed ? 0 : c.completed, totalChecks: changed ? 0 : c.totalChecks,
+    };
+  });
+  return JSON.parse(JSON.stringify({
+    prompt: state.prompt,
+    responses: state.responses.map((r) => ({ text: r.text, grade: r.grade, feedback: r.feedback })),
+    criteria, threshold: state.threshold, models: { ...state.models },
+    defaultModel: state.defaultModel, sampleModel: state.sampleModel, sampledAt: state.sampledAt,
+    sampling: null, nextHigh: state.wizard.nextHigh,
+    report: null, reported: criteria.filter((c) => c.on).map((c) => c.id),
+  }));
+}
+
+function downloadSessionFile(content, filename, mimeType) {
+  const url = URL.createObjectURL(new Blob([content], { type: `${mimeType};charset=utf-8` }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.hidden = true;
+  document.body.append(link);
+  try {
+    link.click();
+  } finally {
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+}
+
+async function exportSession(kind) {
+  if (!canExport() || !['json', 'html'].includes(kind)) return;
+  const snapshot = captureSessionSnapshot();
+  const exportedAt = new Date().toISOString();
+  state.exporting = kind;
+  render();
+  try {
+    if (!window.EvalGenExport) throw new Error('Session export is unavailable. Reload the page and try again.');
+    const enabled = snapshot.criteria.filter((c) => c.on);
+    if (enabled.length) {
+      const grades = snapshot.responses.map((r) => r.grade);
+      [snapshot.report, snapshot.sampling] = await Promise.all([
+        api('/api/report', {
+          results: enabled.map((c) => c.results || []),
+          grades, ffr_threshold: snapshot.threshold, active: enabled.map((c) => c.keep),
+        }),
+        api('/api/sampling', {
+          results: enabled.filter((c) => c.keep && c.results)
+            .map((c) => c.results.filter((_, candidate) => !c.errors?.[candidate]?.some(Boolean))),
+          grades, next_high: snapshot.nextHigh,
+        }),
+      ]);
+    }
+    const session = window.EvalGenExport.buildSessionExport(snapshot, exportedAt);
+    const content = kind === 'json'
+      ? `${JSON.stringify(session, null, 2)}\n`
+      : window.EvalGenExport.renderSessionHtml(session);
+    const stamp = exportedAt.slice(0, 19).replace(/[T:]/g, '-');
+    downloadSessionFile(content, `evalgen-session-${stamp}.${kind}`, kind === 'json' ? 'application/json' : 'text/html');
+    toast(kind === 'json' ? 'Session JSON downloaded.' : 'Report downloaded. Open the HTML file to read or print it.');
+  } catch (error) {
+    toast(`Could not export this session: ${error.message}`);
+  } finally {
+    state.exporting = null;
+    render();
+  }
+}
+
+function exportActions() {
+  return el('div', { class: 'export-actions', 'aria-label': 'Export session' },
+    el('button', {
+      class: 'btn export-btn' + (state.exporting === 'json' ? ' busy' : ''), disabled: !canExport(),
+      title: 'Download the complete session as JSON', onclick: () => exportSession('json'),
+    }, 'Export JSON'),
+    el('button', {
+      class: 'btn export-btn' + (state.exporting === 'html' ? ' busy' : ''), disabled: !canExport(),
+      title: 'Download a readable HTML report that you can open or print', onclick: () => exportSession('html'),
+    }, 'Export report'),
+  );
+}
+
+function renderExportControls() {
+  [['export-json', 'json'], ['export-report', 'html']].forEach(([id, kind]) => {
+    const button = $(id);
+    button.disabled = !canExport();
+    button.classList.toggle('busy', state.exporting === kind);
+    button.setAttribute('aria-busy', String(state.exporting === kind));
+  });
 }
 
 // ---------- Canvas ----------
@@ -860,6 +968,7 @@ function screenReport() {
       : el('p', { class: 'hint', style: 'text-align: center' }, 'No criteria implemented yet.'),
     el('div', { class: 'center-row' },
       el('button', { class: 'btn', onclick: () => go('grade') }, 'Back to grading'),
+      exportActions(),
       el('button', { class: 'btn primary', onclick: closeWizard }, 'Done'),
     ),
   ];
@@ -894,12 +1003,15 @@ function render() {
   renderPromptNode();
   renderEvalNode();
   renderTable();
+  renderExportControls();
   if (state.wizard.open) renderWizard();
 }
 
 // ---------- Events ----------
 
 $('btn-run').addEventListener('click', runPrompt);
+$('export-json').addEventListener('click', () => exportSession('json'));
+$('export-report').addEventListener('click', () => exportSession('html'));
 $('wizard-close').addEventListener('click', closeWizard);
 $('wizard').addEventListener('click', (e) => { if (e.target === $('wizard')) closeWizard(); });
 document.addEventListener('keydown', (e) => {
@@ -983,6 +1095,7 @@ function fillModels(models, fallback) {
   render();
   try {
     const info = await api('/api/info');
+    state.defaultModel = info.model;
     state.threshold = info.ffr_threshold;
     state.pythonSandbox = info.python_sandbox || { available: false, reason: 'This server does not provide Python evaluation.' };
     render();

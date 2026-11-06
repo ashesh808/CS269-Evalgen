@@ -71,6 +71,27 @@ uv run --env-file .env pytest -m slow
 Offline tests include actual sandbox execution and denial checks when the platform
 sandbox is available. No live LLM is used by the default suite.
 
+## Session exports
+
+After generating responses, use **Export JSON** or **Export report** in the Table View
+header or the report card. Export is available once generation and evaluation have
+finished; human grades and criteria can still be incomplete.
+
+JSON includes the prompt, recorded generation model, responses, human grades and
+feedback, enabled/excluded criteria, all candidate implementations and their verdicts
+and errors, the selected implementations, and freshly calculated alignment results.
+Unknown verdicts remain `null`.
+
+The HTML report is a standalone, readable document with a response table and evaluator
+details. Open it in a browser to read or print it. Both downloads capture the session
+when you click Export; they do not reset your session or save export files on the server.
+
+Frontend export tests use Node's built-in test runner:
+
+```sh
+node --test tests/test_export.cjs
+```
+
 ## Deployment
 
 The GitHub repository `ashesh808/CS269-Evalgen` is connected to the Vercel project

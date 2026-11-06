@@ -7,4 +7,5 @@ and environment isolation; they skip when no supported sandbox is available.
 ```
 uv run pytest                           # offline unit, API, sampler, sandbox tests
 uv run --env-file .env pytest -m slow     # live server from config.toml
+node --test tests/test_export.cjs         # session serialization and standalone report
 ```
