@@ -1,18 +1,43 @@
-"""
-Runs assertions on pipeline outputs with an LLM grader, and samples outputs to grade
-
-A verdict the grader garbles twice is recorded as None rather than failing the whole run
-"""
+"""Execute independent candidates, retaining unknown verdicts and per-output errors."""
 
 import asyncio
+from collections.abc import AsyncIterator
+from dataclasses import dataclass
 
+import openai
+
+from evalgen.assertions import EvaluatorKind
 from evalgen.llm import Completer, parse_verdict
 from evalgen.prompts import Message, render
+from evalgen.sandbox import evaluate_python_detailed
 
 # One retry, since a garbled verdict is usually a one-off formatting slip
 VERDICT_ATTEMPTS = 2
 
 Verdict = bool | None
+
+
+@dataclass(frozen=True)
+class EvaluationEvent:
+    criterion: int
+    assertion: int
+    output: int
+    verdict: Verdict
+    error: str | None = None
+
+
+async def _llm_verdict(
+    llm: Completer, assertion: str, prompt: str, output: str, max_tokens: int | None
+) -> tuple[Verdict, str | None]:
+    messages = render("evaluate", prompt=prompt, response=output, assertion=assertion)
+    for _ in range(VERDICT_ATTEMPTS):
+        try:
+            return parse_verdict(await llm.complete(messages, max_tokens=max_tokens)), None
+        except ValueError:
+            continue
+        except openai.APIError as error:
+            return None, f"LLM evaluation failed: {error}"[:500]
+    return None, "The grader returned no readable True/False verdict after two attempts."
 
 
 async def run_assertion(
@@ -31,13 +56,78 @@ async def run_assertion(
     Returns:
         True when the output passes, False when it fails, None when no verdict was readable.
     """
-    messages = render("evaluate", prompt=prompt, response=output, assertion=assertion)
-    for _ in range(VERDICT_ATTEMPTS):
-        try:
-            return parse_verdict(await llm.complete(messages, max_tokens=max_tokens))
-        except ValueError:
-            continue
-    return None
+    verdict, _ = await _llm_verdict(llm, assertion, prompt, output, max_tokens)
+    return verdict
+
+
+async def run_matrix_events(
+    llm: Completer,
+    assertions: list[list[str]],
+    prompt: str,
+    outputs: list[str],
+    max_tokens: int | None = None,
+    kinds: list[EvaluatorKind] | None = None,
+    python_timeout: float = 3.0,
+    python_limit: asyncio.Semaphore | None = None,
+) -> AsyncIterator[EvaluationEvent]:
+    """Publish completed verdicts; a broken candidate never discards unrelated results."""
+    kinds = ["llm"] * len(assertions) if kinds is None else kinds
+    python_limit = asyncio.Semaphore(2) if python_limit is None else python_limit
+
+    async def llm_job(c: int, a: int, o: int, assertion: str) -> list[EvaluationEvent]:
+        verdict, error = await _llm_verdict(llm, assertion, prompt, outputs[o], max_tokens)
+        return [EvaluationEvent(c, a, o, verdict, error)]
+
+    async def python_job(c: int, a: int, assertion: str) -> list[EvaluationEvent]:
+        async with python_limit:
+            result = await evaluate_python_detailed(assertion, outputs, prompt, python_timeout)
+        return [
+            EvaluationEvent(c, a, o, verdict, error)
+            for o, (verdict, error) in enumerate(zip(result.results, result.errors, strict=True))
+        ]
+
+    tasks: list[asyncio.Task[list[EvaluationEvent]]] = []
+    for c, (group, kind) in enumerate(zip(assertions, kinds, strict=True)):
+        for a, assertion in enumerate(group):
+            if kind == "python":
+                tasks.append(asyncio.create_task(python_job(c, a, assertion)))
+            else:
+                tasks.extend(
+                    asyncio.create_task(llm_job(c, a, o, assertion)) for o in range(len(outputs))
+                )
+    try:
+        for task in asyncio.as_completed(tasks):
+            for event in await task:
+                yield event
+    finally:
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+
+async def run_matrix_detailed(
+    llm: Completer,
+    assertions: list[list[str]],
+    prompt: str,
+    outputs: list[str],
+    max_tokens: int | None = None,
+    kinds: list[EvaluatorKind] | None = None,
+    python_timeout: float = 3.0,
+    python_limit: asyncio.Semaphore | None = None,
+) -> tuple[list[list[list[Verdict]]], list[list[list[str | None]]]]:
+    results: list[list[list[Verdict]]] = [
+        [[None] * len(outputs) for _ in group] for group in assertions
+    ]
+    errors: list[list[list[str | None]]] = [
+        [[None] * len(outputs) for _ in group] for group in assertions
+    ]
+    async for event in run_matrix_events(
+        llm, assertions, prompt, outputs, max_tokens, kinds, python_timeout, python_limit
+    ):
+        results[event.criterion][event.assertion][event.output] = event.verdict
+        errors[event.criterion][event.assertion][event.output] = event.error
+    return results, errors
 
 
 async def run_matrix(
@@ -60,14 +150,8 @@ async def run_matrix(
     Returns:
         Verdicts indexed as [criterion][assertion][output].
     """
-    jobs = [
-        run_assertion(llm, assertion, prompt, output, max_tokens)
-        for group in assertions
-        for assertion in group
-        for output in outputs
-    ]
-    flat = iter(await asyncio.gather(*jobs))
-    return [[[next(flat) for _ in outputs] for _ in group] for group in assertions]
+    results, _ = await run_matrix_detailed(llm, assertions, prompt, outputs, max_tokens)
+    return results
 
 
 async def sample_outputs(llm: Completer, prompt: str, count: int, temperature: float) -> list[str]:

@@ -9,7 +9,7 @@ import copy
 import re
 from typing import Protocol, cast
 
-from openai import AsyncOpenAI
+from openai import NOT_GIVEN, AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
 
 from evalgen.config import LLMConfig
@@ -89,7 +89,7 @@ class LLMClient:
                 model=self._model,
                 messages=cast("list[ChatCompletionMessageParam]", messages),
                 temperature=self._temperature if temperature is None else temperature,
-                max_tokens=max_tokens,
+                max_tokens=NOT_GIVEN if max_tokens is None else max_tokens,
             )
         return response.choices[0].message.content or ""
 
@@ -111,7 +111,7 @@ class LLMClient:
 
     async def list_models(self) -> list[str]:
         """
-        Lists the models the server offers
+        Lists language models, including models from servers that omit type metadata
 
         Returns:
             The model names, in server order.
@@ -120,7 +120,9 @@ class LLMClient:
             openai.APIError: The server is unreachable or has no model listing.
         """
         page = await self._client.models.list()
-        return [model.id for model in page.data]
+        return [
+            model.id for model in page.data if getattr(model, "type", None) in (None, "language")
+        ]
 
 
 def parse_list(text: str) -> list[str]:

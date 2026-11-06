@@ -2,7 +2,7 @@
 Scores assertions against human grades and picks the most aligned one per criterion
 
 Coverage, false failure rate and alignment follow section 4.2 of Shankar et al. (UIST 2024)
-A verdict of None never counts as a failure, as the grader produced no evidence either way
+Unreadable verdicts remain unknown and cannot qualify a candidate for selection
 """
 
 from collections.abc import Sequence
@@ -18,6 +18,8 @@ class Confusion:
     bad_passed: int = 0
     good_failed: int = 0
     good_passed: int = 0
+    bad_unknown: int = 0
+    good_unknown: int = 0
 
 
 @dataclass(frozen=True)
@@ -26,6 +28,9 @@ class Score:
     ffr: float | None
     alignment: float | None
     confusion: Confusion = field(default_factory=Confusion)
+    complete: bool = True
+    known_count: int = 0
+    unknown_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -38,10 +43,13 @@ class CriterionReport:
 class Report:
     criteria: list[CriterionReport]
     overall: Score
-    set_fails: list[bool]
+    set_fails: list[bool | None]
+    active_count: int = 0
+    selected_count: int = 0
+    selection_complete: bool = False
 
 
-def score(fails: Sequence[bool], grades: Sequence[Grade]) -> Score:
+def score(fails: Sequence[bool | None], grades: Sequence[Grade]) -> Score:
     """
     Computes coverage, false failure rate and alignment of one failure pattern
 
@@ -49,31 +57,45 @@ def score(fails: Sequence[bool], grades: Sequence[Grade]) -> Score:
     Alignment is the harmonic mean of coverage and 1 - FFR
 
     Args:
-        fails: Whether the assertion or set flags each output.
+        fails: Whether the assertion or set flags each output, None when unknown.
         grades: The human grade per output, True for good, None for ungraded.
 
     Returns:
-        The score, with None for any rate whose denominator is empty.
+        The score, with None for a rate with no grades or an unknown outcome in that class.
+        Counts cover all outputs, including ungraded outputs, so completeness can gate selection.
     """
+    if len(fails) != len(grades):
+        raise ValueError("Each output must have one failure flag and one grade")
     bad = [fail for fail, grade in zip(fails, grades, strict=True) if grade is False]
     good = [fail for fail, grade in zip(fails, grades, strict=True) if grade is True]
     confusion = Confusion(
-        bad_failed=sum(bad),
-        bad_passed=len(bad) - sum(bad),
-        good_failed=sum(good),
-        good_passed=len(good) - sum(good),
+        bad_failed=sum(fail is True for fail in bad),
+        bad_passed=sum(fail is False for fail in bad),
+        good_failed=sum(fail is True for fail in good),
+        good_passed=sum(fail is False for fail in good),
+        bad_unknown=sum(fail is None for fail in bad),
+        good_unknown=sum(fail is None for fail in good),
     )
-    coverage = sum(bad) / len(bad) if bad else None
-    ffr = sum(good) / len(good) if good else None
-    if coverage is None or ffr is None:
-        return Score(coverage, ffr, None, confusion)
-    passed = 1 - ffr
-    total = coverage + passed
-    alignment = 2 * coverage * passed / total if total else 0.0
-    return Score(coverage, ffr, alignment, confusion)
+    coverage = confusion.bad_failed / len(bad) if bad and not confusion.bad_unknown else None
+    ffr = confusion.good_failed / len(good) if good and not confusion.good_unknown else None
+    alignment = None
+    if coverage is not None and ffr is not None:
+        passed = 1 - ffr
+        total = coverage + passed
+        alignment = 2 * coverage * passed / total if total else 0.0
+    unknown_count = sum(fail is None for fail in fails)
+    return Score(
+        coverage,
+        ffr,
+        alignment,
+        confusion,
+        complete=unknown_count == 0,
+        known_count=len(fails) - unknown_count,
+        unknown_count=unknown_count,
+    )
 
 
-def failures(verdicts: Sequence[Verdict]) -> list[bool]:
+def failures(verdicts: Sequence[Verdict]) -> list[bool | None]:
     """
     Turns verdicts into failure flags
 
@@ -81,9 +103,9 @@ def failures(verdicts: Sequence[Verdict]) -> list[bool]:
         verdicts: One verdict per output.
 
     Returns:
-        True where the verdict is an explicit fail.
+        True where the verdict is an explicit fail, None where no verdict is available.
     """
-    return [verdict is False for verdict in verdicts]
+    return [None if verdict is None else verdict is False for verdict in verdicts]
 
 
 def select(scores: Sequence[Score], ffr_threshold: float) -> int | None:
@@ -99,10 +121,14 @@ def select(scores: Sequence[Score], ffr_threshold: float) -> int | None:
     Returns:
         The index of the selected candidate, None when no candidate qualifies or nothing is graded.
     """
+    if not 0.0 <= ffr_threshold <= 1.0:
+        raise ValueError("The false failure threshold must be between 0 and 1")
     eligible = [
         index
         for index, item in enumerate(scores)
-        if (item.coverage is not None or item.ffr is not None)
+        if item.complete
+        and item.unknown_count == 0
+        and (item.coverage is not None or item.ffr is not None)
         and (item.ffr is None or item.ffr <= ffr_threshold)
     ]
     if not eligible:
@@ -127,7 +153,8 @@ def build_report(
     """
     Scores every candidate, selects one per criterion, and scores the selected set
 
-    An output fails the set when any selected assertion fails it
+    An output fails the set when any selected assertion fails it. An unresolved active
+    criterion keeps other outcomes unknown; an empty selected set has no available outcomes.
 
     Args:
         results: Verdicts indexed as [criterion][assertion][output].
@@ -138,14 +165,41 @@ def build_report(
     Returns:
         Per-criterion scores and selections, plus the selected set's score and failures.
     """
-    reports = []
-    set_fails = [False] * len(grades)
+    if not 0.0 <= ffr_threshold <= 1.0:
+        raise ValueError("The false failure threshold must be between 0 and 1")
     active = [True] * len(results) if active is None else active
+    if len(active) != len(results):
+        raise ValueError("active must have one entry per criterion")
+    for group in results:
+        for verdicts in group:
+            if len(verdicts) != len(grades):
+                raise ValueError("Every candidate must have one verdict per output")
+
+    reports = []
+    included_flags: list[list[bool | None]] = []
+    selected_count = 0
     for group, included in zip(results, active, strict=True):
         flags = [failures(verdicts) for verdicts in group]
         scores = [score(flag, grades) for flag in flags]
         selected = select(scores, ffr_threshold)
-        if selected is not None and included:
-            set_fails = [a or b for a, b in zip(set_fails, flags[selected], strict=True)]
+        if included:
+            included_flags.append([None] * len(grades) if selected is None else flags[selected])
+            selected_count += selected is not None
         reports.append(CriterionReport(scores, selected))
-    return Report(reports, score(set_fails, grades), set_fails)
+    set_fails: list[bool | None] = [None] * len(grades)
+    if selected_count:
+        for index in range(len(grades)):
+            outcomes = [pattern[index] for pattern in included_flags]
+            if any(outcome is True for outcome in outcomes):
+                set_fails[index] = True
+            elif all(outcome is False for outcome in outcomes):
+                set_fails[index] = False
+    active_count = sum(active)
+    return Report(
+        reports,
+        score(set_fails, grades),
+        set_fails,
+        active_count=active_count,
+        selected_count=selected_count,
+        selection_complete=active_count > 0 and selected_count == active_count,
+    )

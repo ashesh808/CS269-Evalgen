@@ -7,15 +7,19 @@ const GRADE_FIRST_MIN = 5;
 const state = {
   prompt: '',          // prompt the current responses came from
   responses: [],       // { text, grade: true | false | null, feedback }
-  criteria: [],        // { id, title, description, on, keep, status, assertions, results, error }
+  criteria: [],        // { id, title, description, kind, on, keep, assertions, results, errors }
   suggesting: false,
+  querying: false,
+  datasetGeneration: 0,
   draft: '',           // unsent text in the add-criterion box
   report: null,
   reported: [],        // criterion ids in report order
   threshold: 0.4,
   models: { prompt: null, evaluator: null },  // null means the config.toml default
   progress: { total: 0, done: 0 },
-  wizard: { open: false, screen: 'start', gradeFirst: false, index: 0, reached: new Set(['start']) },
+  pythonSandbox: { available: false, reason: 'Checking Python execution support.' },
+  sampling: null,
+  wizard: { open: false, screen: 'start', gradeFirst: false, index: 0, nextHigh: true, navigation: 0, reached: new Set(['start']) },
 };
 let nextId = 1;
 
@@ -42,6 +46,19 @@ const pct = (value) => (value === null || value === undefined ? 'n/a' : `${Math.
 const label = (c) => (c.description ? `${c.title}: ${c.description}` : c.title);
 const graded = () => state.responses.filter((r) => r.grade !== null).length;
 const implementing = () => state.criteria.some((c) => c.status === 'generating' || c.status === 'running');
+const kindLabel = (c) => c.kind === 'python' ? 'Code' : 'LLM';
+
+function invalidateCriterion(c) {
+  c.runId = (c.runId || 0) + 1;
+  Object.assign(c, { status: 'draft', assertions: [], results: null, errors: [], error: '', completed: 0, totalChecks: 0 });
+  invalidateReport();
+}
+
+function invalidateReport() {
+  reportSeq += 1;
+  state.report = null;
+  state.reported = [];
+}
 
 function toneFor(value) {
   if (value === null || value === undefined) return 'var(--overlay0)';
@@ -75,43 +92,162 @@ async function api(path, body) {
   return data;
 }
 
+async function evaluateStream(body, onEvent) {
+  const response = await fetch('/api/evaluate/stream', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(typeof data.detail === 'string' ? data.detail : `Evaluation failed (${response.status}).`);
+  }
+  if (!response.body) throw new Error('Evaluation returned no result stream.');
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let pending = '';
+  let finished = false;
+  const consume = (line) => {
+    if (!line.trim()) return;
+    const event = JSON.parse(line);
+    if (event.done) finished = true;
+    else if (event.error && event.assertion === undefined) throw new Error(event.error);
+    else onEvent(event);
+  };
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      pending += decoder.decode(value, { stream: !done });
+      let newline;
+      while ((newline = pending.indexOf('\n')) !== -1) {
+        consume(pending.slice(0, newline));
+        pending = pending.slice(newline + 1);
+      }
+      if (done) break;
+    }
+    consume(pending);
+    if (!finished) throw new Error('Evaluation ended before every result was received.');
+  } finally {
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
+}
+
+let samplingSeq = 0;
+let pendingAdvance = null;
+async function refreshSampling(advance = null) {
+  if (state.querying) return;
+  if (advance) pendingAdvance = advance;
+  const requestedAdvance = pendingAdvance;
+  const seq = ++samplingSeq;
+  const generation = state.datasetGeneration;
+  const nextHigh = state.wizard.nextHigh;
+  try {
+    const sampling = await api('/api/sampling', {
+      results: state.criteria.filter((c) => c.on && c.keep && c.results)
+        .map((c) => c.results.filter((_, candidate) => !c.errors?.[candidate]?.some(Boolean))),
+      grades: state.responses.map((r) => r.grade), next_high: nextHigh,
+    });
+    if (seq !== samplingSeq || generation !== state.datasetGeneration) return;
+    state.sampling = sampling;
+    // New results refine the next recommendation without replacing an output being read.
+    if (requestedAdvance && state.wizard.navigation === requestedAdvance.navigation && state.wizard.index === requestedAdvance.index
+      && state.responses[requestedAdvance.index] === requestedAdvance.response && requestedAdvance.response.grade !== null) {
+      const next = sampling.next_index;
+      if (Number.isInteger(next) && state.responses[next]?.grade === null) {
+        state.wizard.index = next;
+        state.wizard.nextHigh = !nextHigh;
+        state.wizard.navigation += 1;
+      }
+    }
+    if (pendingAdvance === requestedAdvance) pendingAdvance = null;
+    state.wizard.advancing = false;
+    render();
+  } catch (error) {
+    if (seq !== samplingSeq || generation !== state.datasetGeneration) return;
+    state.sampling = null;
+    if (requestedAdvance && state.wizard.navigation === requestedAdvance.navigation && state.wizard.index === requestedAdvance.index) {
+      const next = state.responses.findIndex((r) => r.grade === null);
+      if (next !== -1) { state.wizard.index = next; state.wizard.navigation += 1; }
+    }
+    if (pendingAdvance === requestedAdvance) pendingAdvance = null;
+    state.wizard.advancing = false;
+    toast(`Could not update grading order: ${error.message}`);
+    render();
+  }
+}
+
+let resultRefreshTimer = null;
+function queueResultRefresh() {
+  if (resultRefreshTimer !== null) return;
+  resultRefreshTimer = setTimeout(() => {
+    resultRefreshTimer = null;
+    refreshReport();
+    refreshSampling();
+  }, 80);
+}
+
 // ---------- Pipeline ----------
 
 async function runPrompt() {
+  if (state.querying) return;
   const prompt = $('prompt').value.trim();
   if (!prompt) return;
   if (implementing()) { toast('Wait for the evaluator to finish first'); return; }
+  if (state.suggesting) { toast('Wait for the criteria suggestions to finish first'); return; }
   const evaluated = state.criteria.some((c) => c.status !== 'draft');
   if (evaluated && !confirm('Running the prompt replaces the responses and grades, and resets evaluator results. Continue?')) return;
 
   const button = $('btn-run');
   const status = $('prompt-status');
   const count = Math.min(10, Math.max(1, Number($('num-responses').value) || 1));
+  const generation = ++state.datasetGeneration;
+  state.querying = true;
+  reportSeq += 1;
+  samplingSeq += 1;
+  pendingAdvance = null;
+  state.report = null;
+  state.reported = [];
+  state.sampling = null;
+  state.wizard.navigation += 1;
+  state.wizard.advancing = false;
   button.disabled = true;
   button.classList.add('busy');
   status.classList.remove('error');
   status.textContent = `Sampling ${count} responses...`;
+  render();
   try {
     const { outputs } = await api('/api/sample', { prompt, count, model: state.models.prompt });
+    if (generation !== state.datasetGeneration) return;
     state.prompt = prompt;
     state.responses = outputs.map((text) => ({ text, grade: null, feedback: '' }));
-    state.criteria.forEach((c) => Object.assign(c, { status: 'draft', assertions: [], results: null }));
+    state.criteria.forEach(invalidateCriterion);
     state.report = null;
     state.reported = [];
+    reportSeq += 1;
     state.wizard.index = 0;
+    state.wizard.nextHigh = true;
+    state.wizard.navigation += 1;
+    state.wizard.advancing = false;
+    state.sampling = null;
+    pendingAdvance = null;
+    samplingSeq += 1;
     status.textContent = '';
   } catch (error) {
+    if (generation !== state.datasetGeneration) return;
     status.textContent = 'Failed';
     status.classList.add('error');
     toast(error.message);
   } finally {
-    button.disabled = false;
-    button.classList.remove('busy');
-    render();
+    if (generation === state.datasetGeneration) {
+      state.querying = false;
+      button.classList.remove('busy');
+      render();
+      refreshReport();
+    }
   }
 }
 
 async function suggest() {
+  if (state.querying || state.suggesting) return;
   state.suggesting = true;
   render();
   try {
@@ -135,9 +271,11 @@ async function suggest() {
 
 function addCriterion(title, description = '') {
   state.criteria.push({
-    id: nextId++, title, description, on: true, keep: true,
-    status: 'draft', assertions: [], results: null, error: '',
+    id: nextId++, title, description, kind: 'llm', on: true, keep: true,
+    status: 'draft', assertions: [], results: null, errors: [], error: '', completed: 0, totalChecks: 0, runId: 0,
   });
+  invalidateReport();
+  queueResultRefresh();
 }
 
 function tick(steps = 1) {
@@ -146,73 +284,117 @@ function tick(steps = 1) {
 }
 
 async function implement(criterion) {
+  if (state.querying) { toast('Wait for the prompt responses to finish first'); return; }
   let remaining = 2;
+  const runId = ++criterion.runId;
+  const current = () => criterion.runId === runId && state.criteria.includes(criterion);
   try {
+    if (criterion.kind === 'python' && !state.pythonSandbox.available) {
+      throw new Error(state.pythonSandbox.reason || 'Python evaluation is unavailable.');
+    }
     criterion.status = 'generating';
     criterion.built = label(criterion);
+    criterion.builtKind = criterion.kind;
     criterion.model = state.models.evaluator;
+    criterion.error = '';
+    criterion.errors = [];
+    criterion.results = null;
+    criterion.completed = 0;
+    criterion.totalChecks = 0;
     render();
     const { assertions } = await api('/api/assertions', {
-      prompt: state.prompt, criteria: [label(criterion)], model: criterion.model,
+      prompt: state.prompt, criteria: [label(criterion)], kinds: [criterion.kind], model: criterion.model,
     });
+    if (!current()) return;
     criterion.assertions = assertions[0] || [];
     remaining -= 1;
     tick();
     if (!criterion.assertions.length) throw new Error(`No assertions could be parsed for "${criterion.title}"`);
     criterion.status = 'running';
+    criterion.results = criterion.assertions.map(() => state.responses.map(() => null));
+    criterion.errors = criterion.assertions.map(() => state.responses.map(() => null));
+    criterion.totalChecks = criterion.assertions.length * state.responses.length;
+    const received = new Set();
     render();
-    const { results } = await api('/api/evaluate', {
+    await evaluateStream({
       prompt: state.prompt,
       assertions: [criterion.assertions],
+      kinds: [criterion.kind],
       outputs: state.responses.map((r) => r.text),
       model: criterion.model,
+    }, (event) => {
+      if (!current() || event.criterion !== 0) return;
+      const { assertion, output, verdict } = event;
+      if (!Number.isInteger(assertion) || !Number.isInteger(output)
+        || !criterion.results[assertion] || output < 0 || output >= state.responses.length) return;
+      criterion.results[assertion][output] = verdict === true || verdict === false ? verdict : null;
+      criterion.errors[assertion][output] = event.error || (verdict == null ? 'No readable verdict was returned.' : null);
+      received.add(`${assertion}:${output}`);
+      criterion.completed = received.size;
+      queueResultRefresh();
     });
-    criterion.results = results[0];
+    if (!current()) return;
+    if (received.size !== criterion.totalChecks) throw new Error('Some evaluation results were not received. Implement again to retry.');
     criterion.status = 'done';
     remaining -= 1;
     tick();
   } catch (error) {
+    if (!current()) return;
     criterion.status = 'error';
     criterion.error = error.message;
     toast(error.message);
     tick(remaining);
   }
   refreshReport();
+  refreshSampling();
 }
 
 function implementAll() {
+  if (state.querying) { toast('Wait for the prompt responses to finish first'); return; }
   const targets = state.criteria.filter((c) => c.on && (c.status === 'draft' || c.status === 'error'));
   if (!implementing()) state.progress = { total: 0, done: 0 };
   state.progress.total += targets.length * 2;
   state.wizard.gradeFirst = false;
   const next = state.responses.findIndex((r) => r.grade === null);
   state.wizard.index = next === -1 ? 0 : next;
+  state.wizard.navigation += 1;
   go('grade');
   targets.forEach(implement);
 }
 
 let reportSeq = 0;
+let reportInputSignature = null;
 async function refreshReport() {
-  const done = state.criteria.filter((c) => c.on && c.status === 'done');
+  const done = state.criteria.filter((c) => c.on);
+  const body = {
+    results: done.map((c) => c.results || []),
+    grades: state.responses.map((r) => r.grade),
+    ffr_threshold: state.threshold,
+    active: done.map((c) => c.keep),
+  };
+  const signature = JSON.stringify({ generation: state.datasetGeneration, ids: done.map((c) => c.id), ...body });
+  if (signature !== reportInputSignature) {
+    reportInputSignature = signature;
+    state.report = null;
+    state.reported = [];
+    render();
+  }
   const seq = ++reportSeq;
-  if (!done.length) {
+  const generation = state.datasetGeneration;
+  if (!done.length || state.querying) {
     state.report = null;
     state.reported = [];
     render();
     return;
   }
   try {
-    const report = await api('/api/report', {
-      results: done.map((c) => c.results),
-      grades: state.responses.map((r) => r.grade),
-      ffr_threshold: state.threshold,
-      active: done.map((c) => c.keep),
-    });
-    if (seq !== reportSeq) return;
+    const report = await api('/api/report', body);
+    if (seq !== reportSeq || generation !== state.datasetGeneration || state.querying) return;
     state.report = report;
     state.reported = done.map((c) => c.id);
     render();
   } catch (error) {
+    if (seq !== reportSeq || generation !== state.datasetGeneration || state.querying) return;
     toast(error.message);
   }
 }
@@ -222,13 +404,38 @@ function reportFor(criterion) {
   return index === -1 || !state.report ? null : state.report.criteria[index];
 }
 
+function selectedCandidate(criterion, report = reportFor(criterion)) {
+  const selected = report?.selected;
+  if (!Number.isInteger(selected) || !criterion.results?.[selected]) return null;
+  if (report.scores[selected]?.complete === false
+    || criterion.results[selected].some((verdict) => verdict !== true && verdict !== false)
+    || criterion.errors?.[selected]?.some(Boolean)) return null;
+  return selected;
+}
+
+function selectionMessage(criterion, report = reportFor(criterion)) {
+  if (criterion.status === 'draft') return 'Implement this criterion to select an evaluator.';
+  if (!graded()) return 'Grade responses to select an implementation.';
+  if (!report || !report.scores.length) return 'Waiting for completed evaluation results.';
+  if (report.scores.every((score) => score.complete === false)) {
+    return criterion.status === 'running'
+      ? 'Waiting for a complete candidate. Results appear as each check finishes.'
+      : 'No complete candidate is available. Review the errors below and implement again.';
+  }
+  if (!state.responses.some((r) => r.grade === true) || !state.responses.some((r) => r.grade === false)) {
+    return 'Grade both good and bad responses to measure alignment.';
+  }
+  return 'No complete candidate meets the false failure threshold.';
+}
+
 // ---------- Canvas ----------
 
 function renderPromptNode() {
   $('prompt-ok').hidden = !state.responses.length;
-  $('btn-run').disabled = implementing();
+  $('btn-run').disabled = state.querying || state.suggesting || implementing();
+  $('prompt-model').disabled = state.querying;
   // One evaluator model per run, so a criterion's assertions and verdicts come from the same model
-  $('eval-model').disabled = implementing() || state.suggesting;
+  $('eval-model').disabled = state.querying || implementing() || state.suggesting;
 }
 
 function renderEvalNode() {
@@ -237,7 +444,7 @@ function renderEvalNode() {
   if (!built.length) {
     body.replaceChildren(el('div', { class: 'eval-empty' },
       el('button', {
-        class: 'btn', disabled: !state.responses.length,
+        class: 'btn', disabled: state.querying || !state.responses.length,
         title: state.responses.length ? '' : 'Run the prompt node first',
         onclick: () => openWizard(state.criteria.length ? 'criteria' : 'start'),
       }, icon('sparkles'), 'Generate criteria'),
@@ -249,31 +456,32 @@ function renderEvalNode() {
   }
   const rows = built.map((c) => {
     const report = reportFor(c);
-    const alignment = report && report.selected !== null ? report.scores[report.selected].alignment : null;
+    const chosen = selectedCandidate(c, report);
+    const alignment = chosen !== null ? report.scores[chosen].alignment : null;
     const busy = c.status === 'generating' || c.status === 'running';
     return el('div', { class: 'eval-row' },
       busy ? el('span', { class: 'spinner' }) : el('input', {
-        type: 'checkbox', checked: c.keep, title: 'Use in the table view',
-        onchange: (e) => { c.keep = e.target.checked; refreshReport(); },
+        type: 'checkbox', checked: c.keep, disabled: state.querying, title: 'Use in the table view',
+        onchange: (e) => { c.keep = e.target.checked; refreshReport(); refreshSampling(); },
       }),
       el('span', { class: 'name', title: label(c) }, c.title),
-      el('span', { class: 'kind' }, c.status === 'error' ? 'error' : 'LLM'),
+      el('span', { class: 'kind' }, c.status === 'error' ? `${kindLabel(c)} error` : kindLabel(c)),
       el('span', { class: 'pct-pill', style: `background: ${toneFor(alignment)}` }, pct(alignment)),
     );
   });
   body.replaceChildren(
     el('div', { class: 'eval-list' }, rows),
     el('div', { class: 'eval-actions' },
-      el('button', { class: 'btn', onclick: () => openWizard('criteria') }, icon('pencil'), 'Edit criteria'),
-      el('button', { class: 'btn primary', onclick: () => openWizard(implementing() ? 'grade' : 'report') }, icon('sparkles'), 'Open EvalGen'),
+      el('button', { class: 'btn', disabled: state.querying, onclick: () => openWizard('criteria') }, icon('pencil'), 'Edit criteria'),
+      el('button', { class: 'btn primary', disabled: state.querying, onclick: () => openWizard(implementing() ? 'grade' : 'report') }, icon('sparkles'), 'Open EvalGen'),
     ),
   );
 }
 
-function verdictPill(verdict) {
+function verdictPill(verdict, reason = 'The grader gave no readable verdict') {
   if (verdict === true) return el('span', { class: 'verdict pass' }, 'pass');
   if (verdict === false) return el('span', { class: 'verdict fail' }, 'fail');
-  return el('span', { class: 'verdict none', title: 'The grader gave no readable verdict' }, '?');
+  return el('span', { class: 'verdict none', title: reason }, '?');
 }
 
 function gradeMark(grade) {
@@ -294,9 +502,8 @@ function renderTable() {
     el('th', {}, '#'), el('th', {}, 'Response'), el('th', { class: 'center' }, 'Grade'),
     columns.map((c) => {
       const report = reportFor(c);
-      const fallback = c.status === 'done' && (!report || report.selected === null);
-      return el('th', { class: 'crit center', title: fallback ? 'No aligned assertion yet, showing the first candidate' : label(c) },
-        c.title, fallback ? ' *' : '');
+      const chosen = selectedCandidate(c, report);
+      return el('th', { class: 'crit center', title: chosen === null ? selectionMessage(c, report) : label(c) }, c.title);
     }),
   );
   const rows = state.responses.map((r, i) => el('tr', {},
@@ -304,10 +511,12 @@ function renderTable() {
     el('td', { class: 'response' }, r.text),
     el('td', { class: 'center' }, gradeMark(r.grade)),
     columns.map((c) => {
-      if (c.status !== 'done') return el('td', { class: 'center' }, c.status === 'error' ? '!' : el('span', { class: 'spinner' }));
+      if (c.status === 'generating') return el('td', { class: 'center' }, el('span', { class: 'spinner' }));
       const report = reportFor(c);
-      const chosen = report && report.selected !== null ? report.selected : 0;
-      return el('td', { class: 'center' }, verdictPill(c.results[chosen][i]));
+      const chosen = selectedCandidate(c, report);
+      return el('td', { class: 'center' }, chosen === null
+        ? verdictPill(null, c.error || selectionMessage(c, report))
+        : verdictPill(c.results[chosen][i], c.errors?.[chosen]?.[i]));
     }),
   ));
   body.replaceChildren(el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, head), el('tbody', {}, rows))));
@@ -325,6 +534,9 @@ function openWizard(screen) {
 }
 
 function closeWizard() {
+  state.wizard.navigation += 1;
+  state.wizard.advancing = false;
+  pendingAdvance = null;
   state.wizard.open = false;
   $('wizard').hidden = true;
   document.body.style.overflow = '';
@@ -332,6 +544,9 @@ function closeWizard() {
 }
 
 function go(screen) {
+  state.wizard.navigation += 1;
+  state.wizard.advancing = false;
+  pendingAdvance = null;
   state.wizard.screen = screen;
   state.wizard.reached.add(screen);
   if (screen === 'report' || screen === 'criteria') state.wizard.reached.add('grade');
@@ -340,7 +555,7 @@ function go(screen) {
 }
 
 function screenStart() {
-  const ready = state.responses.length > 0;
+  const ready = state.responses.length > 0 && !state.querying;
   const option = (cls, iconName, text, onclick, tip) => el('button', { class: `option ${cls}`, disabled: !ready, onclick },
     icon(iconName, 22), el('span', {}, text), tip ? el('span', { class: 'tip' }, tip) : null);
   return [
@@ -360,13 +575,22 @@ function screenStart() {
 }
 
 function criterionCard(c) {
-  const locked = c.status === 'generating' || c.status === 'running';
+  const locked = state.querying || c.status === 'generating' || c.status === 'running';
   // Text is stored on every keystroke so background re-renders keep it
   const type = (field) => (e) => { c[field] = e.target.value; };
   const commit = (field) => (e) => {
     c[field] = e.target.value.trim() || (field === 'title' ? 'Untitled' : '');
-    if (c.status !== 'draft' && label(c) !== c.built) Object.assign(c, { status: 'draft', assertions: [], results: null });
+    if (c.status !== 'draft' && label(c) !== c.built) invalidateCriterion(c);
     refreshReport();
+    refreshSampling();
+  };
+  const setKind = (kind) => {
+    if (c.kind === kind) return;
+    c.kind = kind;
+    invalidateCriterion(c);
+    refreshReport();
+    refreshSampling();
+    render();
   };
   const statusNote = {
     done: el('span', { class: 'hint' }, 'Implemented'),
@@ -376,11 +600,11 @@ function criterionCard(c) {
   }[c.status];
   return el('div', { class: 'card' + (c.on ? '' : ' off') },
     el('div', { class: 'card-head' },
-      el('input', { type: 'checkbox', checked: c.on, disabled: locked, onchange: (e) => { c.on = e.target.checked; refreshReport(); } }),
+      el('input', { type: 'checkbox', checked: c.on, disabled: locked, onchange: (e) => { c.on = e.target.checked; refreshReport(); refreshSampling(); } }),
       el('input', { class: 'card-title', type: 'text', value: c.title, disabled: locked, 'data-key': `title-${c.id}`, oninput: type('title'), onchange: commit('title') }),
       el('button', {
         class: 'icon-btn', title: 'Delete', disabled: locked,
-        onclick: () => { state.criteria = state.criteria.filter((x) => x !== c); refreshReport(); },
+        onclick: () => { state.criteria = state.criteria.filter((x) => x !== c); refreshReport(); refreshSampling(); },
       }, icon('trash')),
     ),
     el('textarea', {
@@ -390,8 +614,15 @@ function criterionCard(c) {
     el('div', { class: 'card-foot', style: 'justify-content: space-between; align-items: center' },
       statusNote || el('span'),
       el('div', { class: 'seg' },
-        el('button', { class: 'seg-btn', disabled: true, title: 'Code assertions would run model-written Python, which needs a sandbox' }, icon('code', 13), 'Code'),
-        el('button', { class: 'seg-btn active' }, icon('bot', 13), 'LLM'),
+        el('button', {
+          class: 'seg-btn' + (c.kind === 'python' ? ' active' : ''), disabled: locked || !state.pythonSandbox.available,
+          title: state.pythonSandbox.available ? 'Evaluate this criterion with Python code' : state.pythonSandbox.reason || 'Python evaluation is unavailable.',
+          'aria-pressed': String(c.kind === 'python'), onclick: () => setKind('python'),
+        }, icon('code', 13), 'Code'),
+        el('button', {
+          class: 'seg-btn' + (c.kind === 'llm' ? ' active' : ''), disabled: locked,
+          'aria-pressed': String(c.kind === 'llm'), onclick: () => setKind('llm'),
+        }, icon('bot', 13), 'LLM'),
       ),
     ),
   );
@@ -400,6 +631,7 @@ function criterionCard(c) {
 function screenCriteria() {
   const input = el('input', {
     type: 'text', placeholder: 'the response is valid JSON', 'data-key': 'new-criterion', value: state.draft,
+    disabled: state.querying,
     oninput: (e) => { state.draft = e.target.value; },
     onkeydown: (e) => {
       if (e.key !== 'Enter' || !state.draft.trim()) return;
@@ -414,13 +646,13 @@ function screenCriteria() {
   return [
     el('div', { class: 'add-bar' },
       el('label', {}, 'Type a new criteria to add, then press Enter:', input),
-      el('button', { class: 'btn blue' + (state.suggesting ? ' busy' : ''), disabled: state.suggesting, onclick: suggest },
+      el('button', { class: 'btn blue' + (state.suggesting ? ' busy' : ''), disabled: state.querying || state.suggesting, onclick: suggest },
         state.suggesting ? null : icon('repeat'), state.suggesting ? null : icon('sparkles'), 'Suggest more'),
     ),
     cards.length ? el('div', { class: 'cards' }, cards) : el('p', { class: 'hint', style: 'text-align: center' }, 'No criteria yet. Type one above or ask for suggestions.'),
     el('div', { class: 'center-row' },
       el('button', {
-        class: 'btn implement', disabled: !state.criteria.some((c) => c.on),
+        class: 'btn implement', disabled: state.querying || !state.criteria.some((c) => c.on),
         onclick: () => (pending ? implementAll() : go(implementing() ? 'grade' : 'report')),
       }, icon('sparkles'), pending ? "I'm done. Implement it!" : 'Continue'),
     ),
@@ -428,16 +660,17 @@ function screenCriteria() {
 }
 
 function setGrade(value) {
-  const r = state.responses[state.wizard.index];
+  if (state.querying) return;
+  const w = state.wizard;
+  const index = w.index;
+  const r = state.responses[index];
+  const wasUngraded = r.grade === null;
   r.grade = r.grade === value ? null : value;
-  if (r.grade !== null) {
-    const n = state.responses.length;
-    for (let step = 1; step < n; step += 1) {
-      const j = (state.wizard.index + step) % n;
-      if (state.responses[j].grade === null) { state.wizard.index = j; break; }
-    }
-  }
+  w.navigation += 1;
+  pendingAdvance = null;
+  w.advancing = wasUngraded && r.grade !== null;
   refreshReport();
+  refreshSampling(w.advancing ? { index, response: r, navigation: w.navigation } : null);
   render();
 }
 
@@ -445,9 +678,11 @@ function screenGrade() {
   const n = state.responses.length;
   const w = state.wizard;
   const r = state.responses[w.index];
-  const move = (delta) => { w.index = (w.index + delta + n) % n; render(); };
+  const move = (delta) => { w.navigation += 1; w.advancing = false; pendingAdvance = null; w.index = (w.index + delta + n) % n; render(); };
   const need = Math.min(GRADE_FIRST_MIN, n);
   const count = graded();
+  const finishedChecks = state.criteria.reduce((sum, c) => sum + c.completed, 0);
+  const totalChecks = state.criteria.reduce((sum, c) => sum + c.totalChecks, 0);
 
   let footer;
   if (w.gradeFirst) {
@@ -465,7 +700,9 @@ function screenGrade() {
     const busy = implementing();
     footer = [
       el('div', { class: 'progress-wrap' },
-        el('span', {}, busy ? 'Generating and selecting implementations...' : 'Implementations ready. Keep grading, or finish when you like.'),
+        el('span', {}, busy
+          ? totalChecks ? `Evaluating candidates: ${finishedChecks} of ${totalChecks} checks finished.` : 'Generating candidate implementations...'
+          : 'Implementations ready. Keep grading, or finish when you like.'),
         el('div', { class: 'progress' }, el('div', { class: 'progress-fill', style: `width: ${total ? (100 * done) / total : 100}%` }))),
       el('button', { class: 'btn outline', onclick: () => go('report') }, "I'm tired"),
     ];
@@ -479,6 +716,7 @@ function screenGrade() {
       el('button', { class: 'nav-btn', title: 'Next', disabled: n < 2, onclick: () => move(1) }, icon('right', 22)),
     ),
     el('div', { class: 'response-count' }, `Response ${w.index + 1} of ${n} · ${count} graded`),
+    el('p', { class: 'sampling-note' }, 'As checks finish, the next responses alternate between likely problems and likely passes. Use the arrows to review any response.'),
     el('div', { class: 'context' },
       el('div', { class: 'panel' },
         el('div', { class: 'panel-title' }, 'Feedback'),
@@ -494,8 +732,8 @@ function screenGrade() {
       ),
     ),
     el('div', { class: 'center-row' },
-      el('button', { class: 'btn bad' + (r.grade === false ? ' active' : ''), onclick: () => setGrade(false) }, icon('down'), 'Bad!'),
-      el('button', { class: 'btn good' + (r.grade === true ? ' active' : ''), onclick: () => setGrade(true) }, icon('up'), 'Good!'),
+      el('button', { class: 'btn bad' + (r.grade === false ? ' active' : ''), disabled: state.querying || w.advancing, onclick: () => setGrade(false) }, icon('down'), 'Bad!'),
+      el('button', { class: 'btn good' + (r.grade === true ? ' active' : ''), disabled: state.querying || w.advancing, onclick: () => setGrade(true) }, icon('up'), 'Good!'),
     ),
     el('div', { class: 'grade-foot' }, footer),
   ];
@@ -529,59 +767,90 @@ function donut(score) {
 function reportCard(c) {
   const head = el('div', { class: 'card-head' },
     el('input', {
-      type: 'checkbox', checked: c.keep, disabled: c.status !== 'done', title: 'Keep this criterion in the evaluator',
-      onchange: (e) => { c.keep = e.target.checked; refreshReport(); },
+      type: 'checkbox', checked: c.keep, disabled: state.querying, title: 'Keep this criterion in the evaluator',
+      onchange: (e) => { c.keep = e.target.checked; refreshReport(); refreshSampling(); },
     }),
     el('span', { class: 'card-title', style: 'border: 0' }, c.title),
   );
-  if (c.status === 'generating' || c.status === 'running') {
-    const what = c.status === 'generating'
-      ? 'Writing candidate assertions...'
-      : `Running ${c.assertions.length} assertions on ${state.responses.length} responses...`;
-    return el('div', { class: 'card' }, head, el('div', { class: 'pending' }, el('span', { class: 'spinner' }), what));
+  if (c.status === 'draft') {
+    return el('div', { class: 'card' }, head,
+      el('p', { class: 'hint' }, 'This criterion needs implementation. Return to Criteria to implement it.'));
   }
-  if (c.status === 'error') {
-    return el('div', { class: 'card off' }, head, el('div', { class: 'pending', style: 'color: var(--red)' }, c.error));
+  if (c.status === 'generating') {
+    return el('div', { class: 'card' }, head, el('div', { class: 'pending' }, el('span', { class: 'spinner' }), 'Writing candidate assertions...'));
+  }
+  if (c.status === 'error' && !c.assertions.length) {
+    return el('div', { class: 'card' }, head, el('div', { class: 'evaluation-error', role: 'status' }, c.error));
   }
   const report = reportFor(c);
-  const chosen = report && report.selected !== null ? report.selected : null;
+  const chosen = selectedCandidate(c, report);
   const others = c.assertions.map((text, i) => ({ text, i })).filter(({ i }) => i !== chosen);
+  const failedCandidates = c.errors.filter((row) => row.some(Boolean)).length;
   return el('div', { class: 'card' + (c.keep ? '' : ' off') },
     head,
+    c.status === 'running' ? el('p', { class: 'candidate-status', role: 'status' },
+      el('span', { class: 'spinner' }), `${c.completed} of ${c.totalChecks} checks finished`) : null,
+    c.error ? el('p', { class: 'evaluation-error', role: 'status' }, c.error) : null,
+    failedCandidates ? el('p', { class: 'evaluation-error' },
+      `${failedCandidates} candidate${failedCandidates === 1 ? ' is' : 's are'} unavailable because a check failed to run. Details below.`) : null,
     el('div', { class: 'rcard-body' },
       el('div', { class: 'rcard-text' },
         c.description ? el('span', { class: 'rcard-desc' }, c.description) : null,
-        el('span', { class: 'rcard-kind' }, `LLM · ${c.model || 'default'}`),
+        el('span', { class: 'rcard-kind' }, `${kindLabel(c)} · ${c.model || 'default'}`),
         chosen !== null
-          ? el('div', { class: 'chosen' }, c.assertions[chosen])
-          : el('span', { class: 'hint' }, graded() ? 'No candidate is under the false failure threshold.' : 'Grade responses to pick an implementation.'),
+          ? el('pre', { class: 'chosen' }, c.assertions[chosen])
+          : el('span', { class: 'hint' }, selectionMessage(c, report)),
       ),
       donut(chosen !== null ? report.scores[chosen] : null),
     ),
-    others.length ? el('details', { class: 'bad-impls' },
-      el('summary', {}, chosen === null ? 'Show implementations' : 'Show bad implementations', icon('chevron')),
+    others.length ? el('details', { class: 'bad-impls', open: chosen === null && failedCandidates > 0 },
+      el('summary', {}, chosen === null ? 'Show candidate implementations' : 'Show other implementations', icon('chevron')),
       el('ul', {}, others.map(({ text, i }) => {
         const score = report ? report.scores[i] : null;
-        return el('li', {}, el('b', {}, score ? `align ${pct(score.alignment)} · FFR ${pct(score.ffr)}  ` : ''), text);
+        const issues = new Map();
+        (c.errors[i] || []).forEach((error, output) => {
+          if (!error) return;
+          if (!issues.has(error)) issues.set(error, []);
+          issues.get(error).push(output + 1);
+        });
+        const unknown = score?.unknown_count ?? (c.results?.[i] || []).filter((value) => value === null).length;
+        const complete = score?.complete !== false && unknown === 0;
+        const status = complete ? 'Complete' : unknown ? `${unknown} unresolved` : 'Unavailable';
+        return el('li', {},
+          el('b', {}, `Candidate ${i + 1} · ${status} · alignment ${pct(complete ? score?.alignment : null)} · FFR ${pct(complete ? score?.ffr : null)}`),
+          el('pre', { class: 'candidate-source' }, text),
+          Array.from(issues, ([error, outputs]) => el('p', { class: 'evaluation-error' },
+            `Response${outputs.length === 1 ? '' : 's'} ${outputs.join(', ')}: ${error}`)),
+        );
       })),
     ) : null,
   );
 }
 
 function screenReport() {
-  const overall = state.report ? state.report.overall : null;
-  const built = state.criteria.filter((c) => c.on && c.status !== 'draft');
+  const report = state.report;
+  const complete = report?.selection_complete && report.active_count > 0 && report.selected_count > 0;
+  const overall = complete ? report.overall : null;
+  const built = state.criteria.filter((c) => c.on);
   return [
     el('div', { class: 'screen-title' }, 'Chosen Functions and Alignment'),
     el('div', { class: 'tiles' },
       el('div', { class: 'tile' }, el('div', { class: 'tile-label' }, 'Coverage of Bad Responses'), el('div', { class: 'tile-value blue' }, pct(overall && overall.coverage))),
       el('div', { class: 'tile' }, el('div', { class: 'tile-label' }, 'False Failure Rate'), el('div', { class: 'tile-value red' }, pct(overall && overall.ffr))),
     ),
+    el('p', { class: 'selection-status', role: 'status' }, !report || !report.active_count
+      ? 'No active assertion set is available. Implement and keep at least one criterion to see overall metrics.'
+      : `${report.selected_count} of ${report.active_count} active criteria selected.${complete ? '' : ' Overall metrics are unavailable until every active criterion has a complete, eligible implementation.'}`),
     el('div', { class: 'threshold' },
       el('label', { for: 'ffr' }, 'Max false failure rate per assertion'),
       el('input', {
         type: 'range', id: 'ffr', min: 0, max: 1, step: 0.05, value: state.threshold, 'data-key': 'ffr',
-        oninput: (e) => { state.threshold = Number(e.target.value); e.target.nextSibling.textContent = pct(state.threshold); },
+        oninput: (e) => {
+          state.threshold = Number(e.target.value);
+          e.target.nextSibling.textContent = pct(state.threshold);
+          invalidateReport();
+          queueResultRefresh();
+        },
         onchange: refreshReport,
       }),
       el('span', { class: 'threshold-value' }, pct(state.threshold)),
@@ -639,8 +908,13 @@ document.addEventListener('keydown', (e) => {
   const typing = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
   if (state.wizard.screen !== 'grade' || typing || !state.responses.length) return;
   const n = state.responses.length;
-  if (e.key === 'ArrowLeft') { state.wizard.index = (state.wizard.index - 1 + n) % n; render(); }
-  if (e.key === 'ArrowRight') { state.wizard.index = (state.wizard.index + 1) % n; render(); }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    state.wizard.navigation += 1;
+    state.wizard.advancing = false;
+    pendingAdvance = null;
+    state.wizard.index = (state.wizard.index + (e.key === 'ArrowLeft' ? -1 : 1) + n) % n;
+    render();
+  }
 });
 
 // ---------- Appearance menu ----------
@@ -675,14 +949,27 @@ document.addEventListener('click', (e) => {
 
 const MODELS_KEY = 'evalgen-models';
 
+// Query shortlist reviewed against the gateway catalog on 2026-11-05.
+const QUERY_MODELS = [
+  { id: 'openai/gpt-6.1-terra', label: 'GPT-6.1 Terra · Balanced' },
+  { id: 'google/gemini-4-argon', label: 'Gemini 4 Argon · Reasoning' },
+  { id: 'mistral/mistral-large-4', label: 'Mistral Large 4 · Open weights' },
+  { id: 'inception/mercury-3', label: 'Mercury 3 · Fast, low cost' },
+];
+
 function fillModels(models, fallback) {
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(MODELS_KEY)) || {}; } catch (e) { /* storage blocked */ }
+  const queryOptions = QUERY_MODELS.filter(({ id }) => models.includes(id));
+  const serverOptions = (models.includes(fallback) ? models : [fallback, ...models])
+    .map((id) => ({ id, label: id }));
   [['prompt', 'prompt-model'], ['evaluator', 'eval-model']].forEach(([role, id]) => {
     const select = $(id);
-    const names = models.includes(fallback) ? models : [fallback, ...models];
-    select.replaceChildren(...names.map((name) => el('option', { value: name }, name)));
-    select.value = names.includes(saved[role]) ? saved[role] : fallback;
+    const options = role === 'prompt' && queryOptions.length ? queryOptions : serverOptions;
+    const names = options.map((option) => option.id);
+    const defaultModel = role === 'prompt' ? names[0] : fallback;
+    select.replaceChildren(...options.map((option) => el('option', { value: option.id }, option.label)));
+    select.value = names.includes(saved[role]) ? saved[role] : defaultModel;
     state.models[role] = select.value;
     select.addEventListener('change', () => {
       state.models[role] = select.value;
@@ -694,12 +981,11 @@ function fillModels(models, fallback) {
 (async function boot() {
   syncAppearance();
   render();
-  const chip = $('server-chip');
   try {
     const info = await api('/api/info');
     state.threshold = info.ffr_threshold;
-    chip.textContent = new URL(info.base_url).host;
-    chip.title = `LLM server ${info.base_url}`;
+    state.pythonSandbox = info.python_sandbox || { available: false, reason: 'This server does not provide Python evaluation.' };
+    render();
     try {
       const { models, default: fallback } = await api('/api/models');
       fillModels(models, fallback);
@@ -708,8 +994,6 @@ function fillModels(models, fallback) {
       toast(`Could not list models, using ${info.model}: ${error.message}`);
     }
   } catch (error) {
-    chip.textContent = 'offline';
-    chip.classList.add('offline');
     toast(error.message);
   }
 })();

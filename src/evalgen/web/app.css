@@ -72,12 +72,6 @@ code, pre, textarea, .mono { font-family: 'Maple Mono', ui-monospace, monospace;
 }
 .navbar-left { display: flex; align-items: center; gap: 1rem; min-width: 0; }
 .brand { color: var(--primary); text-decoration: none; font-weight: 700; }
-.model-chip {
-  font-family: 'Maple Mono', ui-monospace, monospace; font-size: 0.75rem; color: var(--subtext0);
-  border: 1px solid var(--surface2); border-radius: 9999px; padding: 0.15rem 0.6rem;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.model-chip.offline { color: var(--red); border-color: var(--red); }
 .navbar-right { display: flex; align-items: center; gap: 0.75rem; }
 .settings-menu { position: relative; }
 .settings-menu > summary { list-style: none; cursor: pointer; }
@@ -310,6 +304,7 @@ tbody tr:hover { background: var(--surface0); }
 .response-box.good { border-color: var(--green); }
 .response-box.bad { border-color: var(--red); }
 .response-count { text-align: center; font-size: 0.8rem; color: var(--subtext0); }
+.sampling-note, .selection-status { text-align: center; font-size: 0.8rem; color: var(--subtext0); max-width: 46rem; margin: 0 auto; line-height: 1.5; }
 .context { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 1.25rem; margin: 0 2.5rem; }
 .panel { border: 1px solid var(--overlay0); border-radius: 12px; padding: 0.75rem 0.9rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .panel.flat { border-color: transparent; padding-left: 0; padding-right: 0; }
@@ -335,7 +330,10 @@ tbody tr:hover { background: var(--surface0); }
 .rcard-text { display: flex; flex-direction: column; gap: 0.4rem; padding-left: 1.65rem; font-size: 0.875rem; }
 .rcard-desc { color: var(--subtext1); }
 .rcard-kind { font-size: 0.75rem; color: var(--subtext0); text-transform: uppercase; letter-spacing: 0.5px; }
-.chosen { font-family: 'Maple Mono', ui-monospace, monospace; font-size: 0.75rem; color: var(--subtext1); background: var(--crust); border-radius: 6px; padding: 0.4rem 0.55rem; }
+.chosen { font-family: 'Maple Mono', ui-monospace, monospace; font-size: 0.75rem; color: var(--subtext1); background: var(--crust); border-radius: 6px; padding: 0.4rem 0.55rem; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 18rem; overflow: auto; }
+.candidate-status { display: flex; align-items: center; gap: 0.5rem; color: var(--subtext0); font-size: 0.78rem; }
+.evaluation-error { font-size: 0.76rem; line-height: 1.45; color: var(--red); white-space: pre-wrap; overflow-wrap: anywhere; }
+.candidate-source { margin: 0.35rem 0; font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 15rem; overflow: auto; }
 .donut-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; width: 6.5rem; }
 .donut { position: relative; width: 4.5rem; height: 4.5rem; }
 .donut svg { transform: rotate(-90deg); }

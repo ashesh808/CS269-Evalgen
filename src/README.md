@@ -9,7 +9,10 @@ evalgen/
 ├── llm.py         chat client, reply parsing
 ├── criteria.py    suggest criteria
 ├── assertions.py  suggest assertions per criterion
-├── grading.py     run assertions, sample outputs
+├── sandbox.py     isolated Python execution and runtime availability
+├── vercel_sandbox.py  remote offline microVM execution on Vercel
+├── grading.py     stream LLM/Code verdicts, sample outputs
+├── sampling.py    selectivity, confidence, alternating grading policy
 ├── alignment.py   coverage, FFR, alignment, selection
 ├── app.py         FastAPI app
 └── web/           page, styles and fonts from kkuroma.github.io

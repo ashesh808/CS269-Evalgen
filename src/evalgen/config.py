@@ -33,6 +33,18 @@ class ServerConfig:
 class EvalConfig:
     assertions_per_criterion: int = 3
     ffr_threshold: float = 0.4
+    python_timeout: float = 3.0
+    python_max_concurrency: int = 2
+
+    def __post_init__(self) -> None:
+        if not 1 <= self.assertions_per_criterion <= 10:
+            raise ValueError("assertions_per_criterion must be between 1 and 10")
+        if not 0 <= self.ffr_threshold <= 1:
+            raise ValueError("ffr_threshold must be between 0 and 1")
+        if not 0 < self.python_timeout <= 30:
+            raise ValueError("python_timeout must be greater than 0 and at most 30 seconds")
+        if not 1 <= self.python_max_concurrency <= 8:
+            raise ValueError("python_max_concurrency must be between 1 and 8")
 
 
 @dataclass(frozen=True)

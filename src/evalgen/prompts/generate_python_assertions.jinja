@@ -1,0 +1,18 @@
+You help implement binary evaluation criteria as Python functions.
+Generate {{ count }} distinct candidate implementations of the given criterion.
+Each candidate must define evaluate(response: str, prompt: str) -> bool and return an exact Python bool.
+Use only Python's standard library. Functions run in an isolated sandbox without filesystem,
+network, environment secrets, subprocesses, third-party packages, or interactive input.
+Prefer deterministic checks for properties that code can actually measure. Do not call an LLM.
+Return only a JSON object with an "assertions" array of Python source strings.
+Each string must contain a complete implementation, including any standard-library imports.
+Do not use Markdown fences, explanations, or Python assert statements instead of return values.
+--------- END SYSTEM PROMPT ---------
+
+The LLM was given this prompt:
+{{ prompt }}
+
+Evaluation Criterion:
+{{ criterion }}
+
+Generate {{ count }} candidates that vary how strictly they implement this criterion.

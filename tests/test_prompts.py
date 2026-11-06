@@ -20,3 +20,15 @@ def test_evaluate_omits_empty_prompt() -> None:
 def test_missing_variable_raises() -> None:
     with pytest.raises(jinja2.UndefinedError):
         render("evaluate", prompt="P", response="R", criteria="A")
+
+
+def test_python_generation_prompt_defines_sandbox_and_json_contract() -> None:
+    system, user = render(
+        "generate_python_assertions", prompt="Write a greeting", criterion="Under 20 words", count=3
+    )
+    assert "evaluate(response: str, prompt: str) -> bool" in system["content"]
+    assert "standard library" in system["content"]
+    assert '"assertions" array of Python source strings' in system["content"]
+    assert "Write a greeting" in user["content"] and "Under 20 words" in user["content"]
+    assert "Generate 3 candidates" in user["content"]
+    assert "END SYSTEM PROMPT" not in system["content"] + user["content"]

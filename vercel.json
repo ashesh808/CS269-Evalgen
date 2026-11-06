@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "fastapi",
+  "regions": ["sfo1"],
+  "functions": {
+    "app.py": {
+      "maxDuration": 300,
+      "includeFiles": "{config.toml,src/evalgen/prompts/**,src/evalgen/web/**}",
+      "excludeFiles": "{tests/**,*.pdf}"
+    }
+  },
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  }
+}

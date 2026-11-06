@@ -1,7 +1,7 @@
-# OpenAI-compatible LLM server, the API key (if any) lives in .env as EVALGEN_API_KEY
+# Vercel AI Gateway; the API key lives in .env as EVALGEN_API_KEY
 [LLM]
-base_url = "http://localhost:11434/v1"
-model = "GPT-OSS-20B"
+base_url = "https://ai-gateway.vercel.sh/v1"
+model = "openai/gpt-oss-20b"
 temperature = 0.0 # suggestion and grading calls
 sample_temperature = 0.9 # sampled pipeline outputs, so samples differ
 timeout = 120.0 # seconds per call, so one stuck call fails over instead of stalling a run
@@ -18,3 +18,5 @@ port = 8269
 [Eval]
 assertions_per_criterion = 3
 ffr_threshold = 0.4 # the paper started at 0.1 and needed 0.4 for its product pipeline
+python_timeout = 3.0 # wall time per sandboxed candidate across the current output batch
+python_max_concurrency = 2
