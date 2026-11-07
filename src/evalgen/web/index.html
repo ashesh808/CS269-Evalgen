@@ -10,6 +10,7 @@
   <script src="/static/themes.js"></script>
   <script src="/static/appearance.js"></script>
   <script defer src="/static/icons.js"></script>
+  <script defer src="/static/artifacts.js"></script>
   <script defer src="/static/export.js"></script>
   <script defer src="/static/app.js"></script>
 </head>
@@ -55,6 +56,17 @@
 Keep it under 80 words, upbeat in tone, and do not invent specifications that are not listed.
 
 Item: stainless steel insulated water bottle, 750 ml, keeps drinks cold for 24 hours, leak-proof lid</textarea>
+          <div class="output-controls">
+            <label class="inline-field">Output format
+              <select class="model-select" id="output-format" aria-describedby="output-format-hint">
+                <option value="text">Text</option>
+                <option value="svg">Logo / vector · SVG</option>
+                <option value="html">Website · HTML/CSS/JS</option>
+              </select>
+            </label>
+            <button type="button" class="format-example" id="format-example" hidden>Use example</button>
+          </div>
+          <p class="hint format-hint" id="output-format-hint" hidden></p>
           <label class="inline-field">Num responses per prompt
             <input type="number" id="num-responses" min="1" max="10" value="6">
           </label>

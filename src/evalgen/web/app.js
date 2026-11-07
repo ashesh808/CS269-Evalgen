@@ -1,11 +1,26 @@
 // EvalGen page, laid out after the prototype in Shankar et al. (UIST 2024):
 // a Prompt node wired to a Multi-Evaluator node, a wizard (start, pick criteria,
-// grade, report card), and a table view. All model text goes through textContent.
+// grade, report card), and a table view. Model source is shown as text or inside
+// an isolated preview; it is never inserted into the application's own DOM.
 
 const GRADE_FIRST_MIN = 5;
+const OUTPUT_FORMATS = {
+  text: { label: 'Text' },
+  svg: {
+    label: 'SVG',
+    hint: 'Generate a vector design, then preview it or inspect its SVG source.',
+    example: 'Design a minimal vector logo for a coffee shop called Orbit Coffee. Combine a coffee cup and an orbital ring into a distinctive, balanced mark. Use warm terracotta and dark espresso colors on a cream background. Include the shop name and keep the design legible at small sizes.',
+  },
+  html: {
+    label: 'HTML/CSS/JS',
+    hint: 'Generate a self-contained website mockup with inline styles and interactions.',
+    example: 'Design a polished, responsive landing page for Orbit Coffee, an independent neighborhood coffee shop. Use a warm cream and terracotta palette, an expressive headline, a featured drinks section, and a visit-us section. Include a working mobile menu and a light/dark theme toggle. Build the illustration with CSS or inline SVG.',
+  },
+};
 
 const state = {
   prompt: '',          // prompt the current responses came from
+  outputFormat: 'text', // format recorded when these responses were sampled
   responses: [],       // { text, grade: true | false | null, feedback }
   criteria: [],        // { id, title, description, kind, on, keep, assertions, results, errors }
   suggesting: false,
@@ -204,6 +219,7 @@ async function runPrompt() {
   const button = $('btn-run');
   const status = $('prompt-status');
   const count = Math.min(10, Math.max(1, Number($('num-responses').value) || 1));
+  const outputFormat = $('output-format').value;
   const sampleModel = state.models.prompt || state.defaultModel;
   const generation = ++state.datasetGeneration;
   state.querying = true;
@@ -221,9 +237,11 @@ async function runPrompt() {
   status.textContent = `Sampling ${count} responses...`;
   render();
   try {
-    const { outputs } = await api('/api/sample', { prompt, count, model: sampleModel });
+    const { outputs } = await api('/api/sample', { prompt, count, model: sampleModel, output_format: outputFormat });
     if (generation !== state.datasetGeneration) return;
     state.prompt = prompt;
+    state.outputFormat = outputFormat;
+    window.EvalGenArtifacts.clearViewers();
     state.sampleModel = sampleModel;
     state.sampledAt = new Date().toISOString();
     state.responses = outputs.map((text) => ({ text, grade: null, feedback: '' }));
@@ -261,6 +279,7 @@ async function suggest() {
   try {
     const { criteria } = await api('/api/criteria', {
       prompt: state.prompt,
+      output_format: state.outputFormat,
       graded: state.responses
         .filter((r) => r.grade !== null)
         .map((r) => ({ output: r.text, good: r.grade, feedback: r.feedback })),
@@ -311,7 +330,8 @@ async function implement(criterion) {
     criterion.totalChecks = 0;
     render();
     const { assertions } = await api('/api/assertions', {
-      prompt: state.prompt, criteria: [label(criterion)], kinds: [criterion.kind], model: criterion.model,
+      prompt: state.prompt, output_format: state.outputFormat,
+      criteria: [label(criterion)], kinds: [criterion.kind], model: criterion.model,
     });
     if (!current()) return;
     criterion.assertions = assertions[0] || [];
@@ -326,6 +346,7 @@ async function implement(criterion) {
     render();
     await evaluateStream({
       prompt: state.prompt,
+      output_format: state.outputFormat,
       assertions: [criterion.assertions],
       kinds: [criterion.kind],
       outputs: state.responses.map((r) => r.text),
@@ -453,6 +474,7 @@ function captureSessionSnapshot() {
   });
   return JSON.parse(JSON.stringify({
     prompt: state.prompt,
+    outputFormat: state.outputFormat,
     responses: state.responses.map((r) => ({ text: r.text, grade: r.grade, feedback: r.feedback })),
     criteria, threshold: state.threshold, models: { ...state.models },
     defaultModel: state.defaultModel, sampleModel: state.sampleModel, sampledAt: state.sampledAt,
@@ -542,6 +564,8 @@ function renderPromptNode() {
   $('prompt-ok').hidden = !state.responses.length;
   $('btn-run').disabled = state.querying || state.suggesting || implementing();
   $('prompt-model').disabled = state.querying;
+  $('output-format').disabled = state.querying;
+  $('format-example').disabled = state.querying;
   // One evaluator model per run, so a criterion's assertions and verdicts come from the same model
   $('eval-model').disabled = state.querying || implementing() || state.suggesting;
 }
@@ -598,10 +622,29 @@ function gradeMark(grade) {
   return el('span', { class: 'grade-mark none', title: 'Ungraded' }, '-');
 }
 
+function responseContent(response, index, compact = false) {
+  return window.EvalGenArtifacts.createViewer(response.text, {
+    format: state.outputFormat, compact,
+    key: `${state.datasetGeneration}-${compact ? 'table' : 'grade'}-${index}`,
+  });
+}
+
+let tableSignature = null;
+let tableResponses = null;
 function renderTable() {
   const body = $('table-body');
   const columns = state.criteria.filter((c) => c.on && c.keep && c.status !== 'draft');
-  $('table-meta').textContent = state.responses.length ? `${state.responses.length} responses, ${graded()} graded` : '';
+  // Leave previews mounted while unrelated progress updates arrive. Removing an
+  // iframe resets its document, including any interaction the user is reviewing.
+  const signature = JSON.stringify({
+    generation: state.datasetGeneration, format: state.outputFormat,
+    responses: state.responses.map((r) => [r.text, r.grade]),
+    columns: columns.map((c) => [c.id, c.title, c.description, c.status, c.error, c.results, c.errors, reportFor(c)]),
+  });
+  if (signature === tableSignature && tableResponses === state.responses) return;
+  tableSignature = signature;
+  const formatLabel = state.outputFormat === 'text' ? '' : ` · ${OUTPUT_FORMATS[state.outputFormat].label}`;
+  $('table-meta').textContent = state.responses.length ? `${state.responses.length} responses, ${graded()} graded${formatLabel}` : '';
   if (!state.responses.length) {
     body.replaceChildren(el('p', { class: 'hint' }, 'Responses and evaluation results appear here.'));
     return;
@@ -614,9 +657,7 @@ function renderTable() {
       return el('th', { class: 'crit center', title: chosen === null ? selectionMessage(c, report) : label(c) }, c.title);
     }),
   );
-  const rows = state.responses.map((r, i) => el('tr', {},
-    el('td', {}, String(i + 1)),
-    el('td', { class: 'response' }, r.text),
+  const resultCells = (r, i) => [
     el('td', { class: 'center' }, gradeMark(r.grade)),
     columns.map((c) => {
       if (c.status === 'generating') return el('td', { class: 'center' }, el('span', { class: 'spinner' }));
@@ -626,8 +667,23 @@ function renderTable() {
         ? verdictPill(null, c.error || selectionMessage(c, report))
         : verdictPill(c.results[chosen][i], c.errors?.[chosen]?.[i]));
     }),
+  ];
+  const mountedRows = body.querySelectorAll('tbody > tr');
+  if (tableResponses === state.responses && mountedRows.length === state.responses.length) {
+    body.querySelector('thead').replaceChildren(head);
+    mountedRows.forEach((row, i) => {
+      while (row.children.length > 2) row.lastElementChild.remove();
+      row.append(...resultCells(state.responses[i], i).flat());
+    });
+    return;
+  }
+  const rows = state.responses.map((r, i) => el('tr', {},
+    el('td', {}, String(i + 1)),
+    el('td', { class: 'response' + (window.EvalGenArtifacts.extractArtifact(r.text, state.outputFormat) ? ' has-artifact' : '') }, responseContent(r, i, true)),
+    resultCells(r, i),
   ));
   body.replaceChildren(el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, head), el('tbody', {}, rows))));
+  tableResponses = state.responses;
 }
 
 // ---------- Wizard ----------
@@ -738,7 +794,9 @@ function criterionCard(c) {
 
 function screenCriteria() {
   const input = el('input', {
-    type: 'text', placeholder: 'the response is valid JSON', 'data-key': 'new-criterion', value: state.draft,
+    type: 'text', placeholder: state.outputFormat === 'svg' ? 'the logo is legible at small sizes'
+      : state.outputFormat === 'html' ? 'the page includes a working mobile menu' : 'the response is valid JSON',
+    'data-key': 'new-criterion', value: state.draft,
     disabled: state.querying,
     oninput: (e) => { state.draft = e.target.value; },
     onkeydown: (e) => {
@@ -782,7 +840,7 @@ function setGrade(value) {
   render();
 }
 
-function screenGrade() {
+function screenGrade(preservePreview = false) {
   const n = state.responses.length;
   const w = state.wizard;
   const r = state.responses[w.index];
@@ -791,6 +849,7 @@ function screenGrade() {
   const count = graded();
   const finishedChecks = state.criteria.reduce((sum, c) => sum + c.completed, 0);
   const totalChecks = state.criteria.reduce((sum, c) => sum + c.totalChecks, 0);
+  const artifact = window.EvalGenArtifacts.extractArtifact(r.text, state.outputFormat);
 
   let footer;
   if (w.gradeFirst) {
@@ -818,12 +877,14 @@ function screenGrade() {
 
   return [
     el('div', { class: 'screen-title' }, 'Is this response', icon('up', 20), 'or', icon('down', 20), '?'),
-    el('div', { class: 'grade-row' },
+    el('div', { class: 'grade-row', 'data-response-key': `${state.datasetGeneration}-${state.sampledAt}-${w.index}` },
       el('button', { class: 'nav-btn', title: 'Previous', disabled: n < 2, onclick: () => move(-1) }, icon('left', 22)),
-      el('div', { class: 'response-box' + (r.grade === true ? ' good' : r.grade === false ? ' bad' : '') }, r.text),
+      el('div', { class: 'response-box' + (artifact ? ' has-artifact' : '')
+        + (r.grade === true ? ' good' : r.grade === false ? ' bad' : '') }, preservePreview ? null : responseContent(r, w.index)),
       el('button', { class: 'nav-btn', title: 'Next', disabled: n < 2, onclick: () => move(1) }, icon('right', 22)),
     ),
     el('div', { class: 'response-count' }, `Response ${w.index + 1} of ${n} · ${count} graded`),
+    artifact ? el('p', { class: 'sampling-note' }, 'Grade the preview and source. Automated graders inspect the source; include visual observations in your feedback.') : null,
     el('p', { class: 'sampling-note' }, 'As checks finish, the next responses alternate between likely problems and likely passes. Use the arrows to review any response.'),
     el('div', { class: 'context' },
       el('div', { class: 'panel' },
@@ -987,7 +1048,27 @@ function renderWizard() {
   const active = document.activeElement;
   const key = active && active.dataset ? active.dataset.key : null;
   const caret = key && 'selectionStart' in active ? [active.selectionStart, active.selectionEnd] : null;
-  $('wizard-body').replaceChildren(...screens[state.wizard.screen]());
+  const body = $('wizard-body');
+  const mountedRow = body.querySelector('.grade-row');
+  // Keep the active preview in place across grading/progress updates. Building a
+  // second viewer would move it out of the mounted row and reset its iframe.
+  const sameResponse = state.wizard.screen === 'grade' && mountedRow
+    && mountedRow.dataset.responseKey === `${state.datasetGeneration}-${state.sampledAt}-${state.wizard.index}`;
+  if (sameResponse) {
+    const r = state.responses[state.wizard.index];
+    const box = mountedRow.querySelector('.response-box');
+    box.classList.toggle('good', r.grade === true);
+    box.classList.toggle('bad', r.grade === false);
+    const children = screenGrade(true);
+    const nextRow = children.find((node) => node?.classList?.contains('grade-row'));
+    const rowIndex = children.indexOf(nextRow);
+    while (mountedRow.previousSibling) mountedRow.previousSibling.remove();
+    while (mountedRow.nextSibling) mountedRow.nextSibling.remove();
+    mountedRow.before(...children.slice(0, rowIndex));
+    mountedRow.after(...children.slice(rowIndex + 1));
+  } else {
+    body.replaceChildren(...screens[state.wizard.screen]());
+  }
   if (key) {
     const again = $('wizard-body').querySelector(`[data-key="${key}"]`);
     if (again) {
@@ -1010,6 +1091,16 @@ function render() {
 // ---------- Events ----------
 
 $('btn-run').addEventListener('click', runPrompt);
+$('output-format').addEventListener('change', () => {
+  const format = OUTPUT_FORMATS[$('output-format').value];
+  $('output-format-hint').textContent = format.hint || '';
+  $('output-format-hint').hidden = !format.hint;
+  $('format-example').hidden = !format.example;
+});
+$('format-example').addEventListener('click', () => {
+  $('prompt').value = OUTPUT_FORMATS[$('output-format').value].example;
+  $('prompt').focus();
+});
 $('export-json').addEventListener('click', () => exportSession('json'));
 $('export-report').addEventListener('click', () => exportSession('html'));
 $('wizard-close').addEventListener('click', closeWizard);

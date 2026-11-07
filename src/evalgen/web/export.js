@@ -17,6 +17,8 @@
   const identifier = (value, fallback) => typeof value === 'string' || finite(value) !== null ? value : fallback;
   const key = (value) => JSON.stringify(value);
   const status = (value) => ['draft', 'generating', 'running', 'done', 'error'].includes(value) ? value : 'unknown';
+  const outputFormat = (value) => ['text', 'svg', 'html'].includes(value) ? value : 'text';
+  const formatName = (value) => ({ text: 'Text', svg: 'SVG logo / vector', html: 'HTML / CSS / JavaScript' })[outputFormat(value)];
 
   function utc(value, required = false) {
     const date = value instanceof Date ? value : new Date(value);
@@ -140,6 +142,7 @@
         id: model(options.sessionId), status: sessionStatus, sampled_at: utc(source.sampledAt),
       },
       prompt: text(source.prompt),
+      output_format: outputFormat(source.outputFormat),
       models: {
         actual_sample_model: model(source.sampleModel) || defaultModel,
         current_query_model: model(source.models?.prompt) || defaultModel,
@@ -222,7 +225,7 @@
         : '<p class="muted">No candidate implementations have been generated.</p>') + '</article>';
   }
 
-  function renderResponse(response, criteria) {
+  function renderResponse(response, criteria, format) {
     const rows = response.selected_verdicts.map((selection, index) => {
       const criterion = criteria[index];
       const included = selection.enabled && selection.kept;
@@ -231,6 +234,7 @@
         + `<td>${outcome(selection.verdict)}</td></tr>`;
     }).join('');
     return `<article class="response"><h3>Response ${response.index + 1} <span class="badge">${humanGrade(response.grade)}</span></h3>`
+      + (outputFormat(format) === 'text' ? '' : `<p class="meta">Source · ${formatName(format)}</p>`)
       + `<pre>${escape(response.text)}</pre>`
       + (response.feedback ? `<p><strong>Human feedback</strong></p><pre class="feedback">${escape(response.feedback)}</pre>` : '')
       + (rows ? `<table><caption>Selected evaluator verdicts</caption><thead><tr><th>Criterion</th><th>Included</th><th>Candidate</th><th>Verdict</th></tr></thead><tbody>${rows}</tbody></table>` : '')
@@ -274,12 +278,13 @@
       + (notices.length ? `<aside class="notice">${notices.map((notice) => `<p>${escape(notice)}</p>`).join('')}</aside>` : '')
       + '<section><h2>Prompt and model provenance</h2>'
       + `<pre>${escape(session.prompt)}</pre><table><tbody><tr><th>Model that produced these responses</th><td>${shown(session.models.actual_sample_model)}</td></tr>`
+      + `<tr><th>Output format</th><td>${formatName(session.output_format)}</td></tr>`
       + `<tr><th>Responses sampled at</th><td>${shown(session.session.sampled_at)}</td></tr><tr><th>Current query selection</th><td>${shown(session.models.current_query_model)}</td></tr>`
       + `<tr><th>Current evaluator selection</th><td>${shown(session.models.current_evaluator_model)}</td></tr><tr><th>False failure rate threshold</th><td>${percent(session.settings.ffr_threshold)}</td></tr>`
       + `<tr><th>Grading sampler</th><td>${escape(session.sampling.policy)}</td></tr></tbody></table></section>`
       + `<section><h2>Selected evaluator set</h2>${metrics(complete ? session.report.overall : null)}${complete ? confusion(session.report.overall) : ''}`
       + '<p class="meta">Coverage is the fraction of human-bad outputs flagged. False failure rate is the fraction of human-good outputs flagged. Alignment is their harmonic combination with 1 − false failure rate. n/a means the rate cannot be determined from this snapshot.</p></section>'
-      + `<section><h2>Responses and human feedback</h2>${session.responses.length ? session.responses.map((response) => renderResponse(response, session.criteria)).join('') : '<p class="muted">No responses are present in this session.</p>'}</section>`
+      + `<section><h2>Responses and human feedback</h2>${session.responses.length ? session.responses.map((response) => renderResponse(response, session.criteria, session.output_format)).join('') : '<p class="muted">No responses are present in this session.</p>'}</section>`
       + `<section><h2>Criteria and every candidate implementation</h2>${session.criteria.length ? session.criteria.map((criterion) => renderCriterion(criterion, session.responses)).join('') : '<p class="muted">No criteria are present in this session.</p>'}</section>`
       + '<footer>This report is a snapshot of the captured session. It includes current disabled and excluded criteria and all retained candidates; it does not include deleted session history. Diagnostic credentials and backend URLs are redacted. No external assets or scripts are required. Use your browser’s Print command to save a PDF.</footer>'
       + '</main></body></html>';

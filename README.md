@@ -22,6 +22,26 @@ uv run python scripts/serve.py
 
 Open <http://127.0.0.1:8269>. The app loads `.env` automatically.
 
+## Output formats
+
+Choose an **Output format** in the Prompt Node before running your prompt:
+
+- **Text** keeps the existing text-response workflow.
+- **Logo / vector · SVG** generates a standalone SVG for logos and other vector designs.
+- **Website · HTML/CSS/JS** generates a self-contained website mockup with inline CSS and JavaScript.
+
+SVG and HTML responses have **Preview** and **Source** views in the table and grading
+screen, plus a download button for the individual `.svg` or `.html` artifact. HTML
+previews support simple JavaScript interactions. Previews run in isolated frames
+with external resources blocked; use inline styles, scripts, SVG, or embedded
+assets instead of external libraries and fonts.
+
+Grade the rendered designs and add visual feedback using the existing evaluator
+workflow. Automated graders inspect the response source and your feedback; they do
+not receive a screenshot or inspect the rendered browser. Code graders receive the
+original source string. The recorded output format stays with the sampled responses
+when you change the selector for a later run.
+
 Each criterion can use an **LLM** grader or **Code**, a generated Python function with
 the signature `evaluate(response: str, prompt: str) -> bool`. To enable Code, keep Docker
 running and install its official Python runtime once:
@@ -77,19 +97,20 @@ After generating responses, use **Export JSON** or **Export report** in the Tabl
 header or the report card. Export is available once generation and evaluation have
 finished; human grades and criteria can still be incomplete.
 
-JSON includes the prompt, recorded generation model, responses, human grades and
+JSON includes the prompt, recorded output format and generation model, response source, human grades and
 feedback, enabled/excluded criteria, all candidate implementations and their verdicts
 and errors, the selected implementations, and freshly calculated alignment results.
 Unknown verdicts remain `null`.
 
-The HTML report is a standalone, readable document with a response table and evaluator
-details. Open it in a browser to read or print it. Both downloads capture the session
+The HTML report is a standalone, readable document with response source and evaluator
+details. SVG and HTML source is escaped so report files remain script-free. Open the
+report in a browser to read or print it. Both downloads capture the session
 when you click Export; they do not reset your session or save export files on the server.
 
-Frontend export tests use Node's built-in test runner:
+Frontend artifact and export tests use Node's built-in test runner:
 
 ```sh
-node --test tests/test_export.cjs
+node --test tests/test_*.cjs
 ```
 
 ## Deployment

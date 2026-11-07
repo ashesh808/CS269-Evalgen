@@ -72,6 +72,53 @@ test('recorded model provenance takes priority over selectors changed after samp
   assert.equal(buildSessionExport(snapshot, exportedAt).criteria[0].candidates[0].model, 'server/default');
 });
 
+test('recorded output format is exported independently of current draft selection', () => {
+  const snapshot = fixture();
+  snapshot.outputFormat = 'svg';
+  snapshot.draftOutputFormat = 'html';
+  snapshot.responses[0].text = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="10"/></svg>';
+  const session = JSON.parse(JSON.stringify(buildSessionExport(snapshot, exportedAt)));
+  assert.equal(session.output_format, 'svg');
+  assert.equal(session.responses[0].text, snapshot.responses[0].text);
+  assert.match(renderSessionHtml(session), /<th>Output format<\/th><td>SVG logo \/ vector<\/td>/);
+  assert.match(renderSessionHtml(session), /Source · SVG logo \/ vector/);
+});
+
+test('legacy and invalid output formats default to text without executing metadata', () => {
+  const snapshot = fixture();
+  assert.equal(buildSessionExport(snapshot, exportedAt).output_format, 'text');
+  for (const value of ['other', '<img src=x onerror="alert(1)">', null, {}, 1]) {
+    snapshot.outputFormat = value;
+    const session = buildSessionExport(snapshot, exportedAt);
+    assert.equal(session.output_format, 'text');
+    assert.match(renderSessionHtml(session), /<th>Output format<\/th><td>Text<\/td>/);
+  }
+  const legacy = buildSessionExport(fixture(), exportedAt);
+  delete legacy.output_format;
+  assert.match(renderSessionHtml(legacy), /<th>Output format<\/th><td>Text<\/td>/);
+});
+
+test('SVG and HTML exports preserve exact source and keep the report script-free', () => {
+  const sources = {
+    svg: '<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)">\n<style>text{fill:red}</style><text>研究 &amp; Co</text>\n</svg>',
+    html: '<!doctype html>\n<html><head><style>body{color:red}</style></head><body><button onclick="alert(1)">Try</button><script>document.body.dataset.clicked="yes";</script></body></html>',
+  };
+  for (const [format, source] of Object.entries(sources)) {
+    const snapshot = fixture();
+    snapshot.outputFormat = format;
+    snapshot.responses[0].text = source;
+    const session = JSON.parse(JSON.stringify(buildSessionExport(snapshot, exportedAt)));
+    assert.equal(session.output_format, format);
+    assert.equal(session.responses[0].text, source);
+    const html = renderSessionHtml(session);
+    assert.doesNotMatch(html, /<svg\b|<script\b|<button\b|<iframe\b|<img\b/i);
+    assert.match(html, /script-src 'none'/);
+    assert.match(html, /connect-src 'none'/);
+    assert.match(html, /Source · /);
+    assert.ok(html.includes(format === 'svg' ? '&lt;svg xmlns=' : '&lt;!doctype html&gt;'));
+  }
+});
+
 test('drafts do not inherit stale model provenance and Python is not labeled an LLM execution', () => {
   const snapshot = fixture();
   snapshot.criteria.push({ id: 8, title: 'Draft', status: 'draft', on: false,

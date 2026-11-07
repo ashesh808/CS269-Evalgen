@@ -9,7 +9,7 @@ import json
 from collections.abc import AsyncIterator
 from dataclasses import asdict
 from pathlib import Path
-from typing import Self
+from typing import Literal, Self
 
 import openai
 from fastapi import FastAPI, HTTPException, Request
@@ -27,10 +27,54 @@ from evalgen.sampling import sampling_plan
 from evalgen.sandbox import sandbox_status
 
 WEB_DIR = Path(__file__).parent / "web"
+OutputFormat = Literal["text", "svg", "html"]
+
+FORMAT_INSTRUCTIONS = {
+    "svg": (
+        "Return a complete, standalone SVG document, with an <svg> root, the SVG namespace, "
+        "and a viewBox. Use vector shapes and inline styles. Keep the design self-contained: "
+        "do not use external fonts, images, stylesheets, scripts, or other network resources. "
+        "Return only the SVG source, without Markdown fences or explanatory prose."
+    ),
+    "html": (
+        "Return one complete, self-contained HTML document for the requested website mockup. "
+        "Include a doctype, a responsive viewport, inline CSS in <style>, and any simple "
+        "JavaScript interactions in <script>. Use plain HTML/CSS/JavaScript without a build "
+        "step, external libraries, remote fonts, images, stylesheets, or network requests. "
+        "Return only the HTML source, without Markdown fences or explanatory prose."
+    ),
+}
+
+
+def output_prompt(prompt: str, output_format: OutputFormat, *, evaluation: bool = False) -> str:
+    """Add the artifact contract while preserving ordinary text requests exactly."""
+    if output_format == "text":
+        return prompt
+    context = (
+        f"{prompt}\n\nOutput format: {output_format.upper()}\n"
+        f"{FORMAT_INSTRUCTIONS[output_format]}"
+    )
+    if evaluation:
+        context += (
+            "\n\nEvaluation context: Responses are artifact source code, not prose. "
+            "Evaluate task requirements and properties that can be established from the source. "
+            "You do not have a rendered screenshot or browser runtime: do not claim to have "
+            "visually inspected the design or executed its interactions. Use human grades and "
+            "feedback, when provided, as evidence for visual preferences. Keep generated "
+            "criteria and assertions specific and checkable from source or that feedback. "
+            "Python evaluators receive the raw source as response, and may parse or inspect it; "
+            "they cannot render or execute SVG, HTML, CSS, or JavaScript."
+        )
+    return context
 
 
 class ModelChoice(BaseModel):
     model: str | None = None
+
+
+class PromptRequest(ModelChoice):
+    prompt: str
+    output_format: OutputFormat = "text"
 
 
 class GradedItem(BaseModel):
@@ -39,14 +83,12 @@ class GradedItem(BaseModel):
     feedback: str = ""
 
 
-class CriteriaRequest(ModelChoice):
-    prompt: str
+class CriteriaRequest(PromptRequest):
     graded: list[GradedItem] = []
     existing: list[str] = []
 
 
-class AssertionsRequest(ModelChoice):
-    prompt: str
+class AssertionsRequest(PromptRequest):
     criteria: list[str]
     kinds: list[EvaluatorKind] | None = None
 
@@ -57,13 +99,11 @@ class AssertionsRequest(ModelChoice):
         return self
 
 
-class SampleRequest(ModelChoice):
-    prompt: str
+class SampleRequest(PromptRequest):
     count: int = Field(default=3, ge=1, le=10)
 
 
-class EvaluateRequest(ModelChoice):
-    prompt: str
+class EvaluateRequest(PromptRequest):
     assertions: list[list[str]]
     outputs: list[str]
     kinds: list[EvaluatorKind] | None = None
@@ -131,6 +171,7 @@ def create_app(settings: Settings, llm: ModelPool) -> FastAPI:
             "ffr_threshold": settings.eval.ffr_threshold,
             "python_sandbox": sandbox_status(),
             "sampling_policy": "alternating",
+            "output_formats": ["text", "svg", "html"],
         }
 
     @app.get("/api/models")
@@ -141,7 +182,10 @@ def create_app(settings: Settings, llm: ModelPool) -> FastAPI:
     async def criteria(body: CriteriaRequest) -> dict[str, list[dict[str, str]]]:
         graded = [GradedOutput(item.output, item.good, item.feedback) for item in body.graded]
         found = await suggest_criteria(
-            llm.with_model(body.model), body.prompt, graded, body.existing
+            llm.with_model(body.model),
+            output_prompt(body.prompt, body.output_format, evaluation=True),
+            graded,
+            body.existing,
         )
         return {"criteria": [asdict(item) for item in found]}
 
@@ -151,7 +195,13 @@ def create_app(settings: Settings, llm: ModelPool) -> FastAPI:
         count = settings.eval.assertions_per_criterion
         client = llm.with_model(body.model)
         try:
-            groups = await suggest_all(client, body.prompt, body.criteria, count, body.kinds)
+            groups = await suggest_all(
+                client,
+                output_prompt(body.prompt, body.output_format, evaluation=True),
+                body.criteria,
+                count,
+                body.kinds,
+            )
         except ValueError as error:
             raise HTTPException(status_code=502, detail=str(error)) from error
         return {"assertions": groups}
@@ -160,7 +210,11 @@ def create_app(settings: Settings, llm: ModelPool) -> FastAPI:
     async def sample(body: SampleRequest) -> dict[str, list[str]]:
         temperature = settings.llm.sample_temperature
         client = llm.with_model(body.model)
-        return {"outputs": await sample_outputs(client, body.prompt, body.count, temperature)}
+        return {
+            "outputs": await sample_outputs(
+                client, output_prompt(body.prompt, body.output_format), body.count, temperature
+            )
+        }
 
     @app.post("/api/evaluate")
     async def evaluate(body: EvaluateRequest) -> dict[str, object]:
@@ -170,7 +224,7 @@ def create_app(settings: Settings, llm: ModelPool) -> FastAPI:
         results, errors = await run_matrix_detailed(
             client,
             body.assertions,
-            body.prompt,
+            output_prompt(body.prompt, body.output_format, evaluation=True),
             body.outputs,
             cap,
             body.kinds,
@@ -187,7 +241,7 @@ def create_app(settings: Settings, llm: ModelPool) -> FastAPI:
             async for event in run_matrix_events(
                 llm.with_model(body.model),
                 body.assertions,
-                body.prompt,
+                output_prompt(body.prompt, body.output_format, evaluation=True),
                 body.outputs,
                 settings.llm.verdict_max_tokens,
                 body.kinds,
