@@ -102,27 +102,30 @@ async function main() {
   const payload = JSON.parse(input);
   if (!['svg', 'html'].includes(payload.output_format) || !Array.isArray(payload.outputs) || payload.outputs.length > 10
     || payload.outputs.some(source => typeof source !== 'string' || source.length > 100000)) throw new Error('Invalid screenshot request.');
-  const browser = await launch();
   const results = [];
   let used = 0;
-  try {
-    for (const source of payload.outputs) {
-      const source_hash = crypto.createHash('sha256').update(source).digest('hex');
-      try {
-        const result = await capture(browser, source, payload.output_format);
-        if (used + result.data_url.length > MAX_BATCH_URLS) throw new Error('The screenshot batch exceeds its image budget; capture fewer responses at once.');
-        used += result.data_url.length;
-        results.push({ ...result, source_hash });
-      } catch (error) {
-        // Browser/transport diagnostics may include generated source or runtime
-        // paths. Keep per-output failures concise and independent.
-        const message = String(error?.message || 'Screenshot rendering failed.');
-        const expected = /^(?:No complete |The design attempted |The rendered screenshot |The screenshot batch )/.test(message);
-        results.push({ source_hash, error: expected ? message : 'The browser could not finish rendering this response.' });
-      }
+  for (const source of payload.outputs) {
+    const source_hash = crypto.createHash('sha256').update(source).digest('hex');
+    let browser;
+    try {
+      // Serverless Chromium runs in single-process mode: closing a context can
+      // terminate that browser. A fresh browser per output also keeps state and
+      // crashes isolated, while reusing the VM's already-decompressed binary.
+      browser = await launch();
+      const result = await capture(browser, source, payload.output_format);
+      if (used + result.data_url.length > MAX_BATCH_URLS) throw new Error('The screenshot batch exceeds its image budget; capture fewer responses at once.');
+      used += result.data_url.length;
+      results.push({ ...result, source_hash });
+    } catch (error) {
+      // Browser/transport diagnostics may include generated source or runtime
+      // paths. Keep per-output failures concise and independent.
+      debug(error?.stack || error);
+      const message = String(error?.message || 'Screenshot rendering failed.');
+      const expected = /^(?:No complete |The design attempted |The rendered screenshot |The screenshot batch )/.test(message);
+      results.push({ source_hash, error: expected ? message : 'The browser could not finish rendering this response.' });
+    } finally {
+      if (browser) await browser.close();
     }
-  } finally {
-    await browser.close();
   }
   process.stdout.write(JSON.stringify(results));
 }

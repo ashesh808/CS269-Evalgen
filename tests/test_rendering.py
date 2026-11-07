@@ -4,7 +4,9 @@ import asyncio
 import base64
 import hashlib
 import json
+import shutil
 import struct
+import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -218,3 +220,72 @@ def test_remote_bootstrap_failure_always_exits_microvm_context(
         asyncio.run(rendering._capture_remote(b"source"))
     assert events == ["destroyed"]
     fs.write_bytes.assert_not_called()
+
+
+@pytest.mark.parametrize("output_format", ["svg", "html"])
+def test_node_runner_relaunches_after_single_process_context_shutdown(
+    tmp_path: Path, output_format: str
+) -> None:
+    """Model serverless Chromium's process death when its first context closes."""
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node.js is required for the browser-runner lifecycle test")
+    runtime = tmp_path / "runtime"
+    playwright = runtime / "node_modules" / "playwright-core"
+    playwright.mkdir(parents=True)
+    (runtime / "package.json").write_text('{"type":"commonjs"}')
+    (playwright / "index.js").write_text(r"""
+const fs = require('node:fs');
+exports.chromium = { launch: async () => {
+  fs.appendFileSync(process.env.EVALGEN_TEST_LAUNCH_LOG, 'L');
+  let stopped = false;
+  return {
+    close: async () => { stopped = true; },
+    newContext: async () => {
+      if (stopped) throw new Error('Single-process browser closed with its context');
+      const page = {
+        on() {},
+        goto: async () => {},
+        evaluate: async () => 640,
+        waitForTimeout: async () => {},
+        url: () => 'https://evalgen-preview.invalid/',
+        screenshot: async () => {
+          const png = Buffer.alloc(24);
+          Buffer.from('89504e470d0a1a0a', 'hex').copy(png);
+          png.writeUInt32BE(960, 16);
+          png.writeUInt32BE(640, 20);
+          return png;
+        },
+      };
+      return {
+        newPage: async () => page,
+        on() {}, route: async () => {},
+        close: async () => { stopped = true; },
+      };
+    },
+  };
+} };
+""")
+    log = tmp_path / "launches"
+    outputs = ["<svg/>", '<svg fill="blue"/>'] if output_format == "svg" else [
+        "<main>Red</main>", "<main>Blue</main>"
+    ]
+    result = subprocess.run(
+        [node, str(rendering.RUNNER)],
+        input=json.dumps({"outputs": outputs, "output_format": output_format}),
+        env=rendering._clean_env(
+            tmp_path,
+            EVALGEN_RENDERER_MODULES=str(runtime / "node_modules"),
+            EVALGEN_ARTIFACT_MODULE=str(rendering.ARTIFACTS),
+            EVALGEN_CHROMIUM_EXECUTABLE="test-browser",
+            EVALGEN_TEST_LAUNCH_LOG=str(log),
+        ),
+        capture_output=True,
+        text=True,
+        timeout=5,
+        check=True,
+    )
+    captures = rendering._validate_results(result.stdout.encode(), outputs)
+    assert len(captures) == 2
+    assert all("data_url" in item for item in captures)
+    assert log.read_text() == "LL", "Each output must own a fresh browser process"
