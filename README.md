@@ -1,11 +1,16 @@
 # EvalGen Reimplementation with Modern LLMs
 
-Install Python 3.14 and [uv](https://docs.astral.sh/uv/), then install the locked dependencies:
+Install Python 3.14 and [uv](https://docs.astral.sh/uv/) **0.13.5 or newer**, then install the locked dependencies:
 
 ```sh
 uv sync --locked
 cp .env.example .env
 ```
+
+The minimum uv version matches the project's `uv_build` backend requirement. Older
+uv releases can fail while extracting its source archives with a misleading checksum
+error. For a standalone uv installation, upgrade with `uv self update`; for other
+installations, use your package manager. See [uv's upgrade instructions](https://docs.astral.sh/uv/getting-started/installation/#upgrading-uv).
 
 Set `EVALGEN_API_KEY` in `.env` to your Vercel AI Gateway key. The file is ignored by Git.
 `config.toml` points to `https://ai-gateway.vercel.sh/v1` and defaults to
@@ -114,6 +119,15 @@ node --test tests/test_*.cjs
 ```
 
 ## Deployment
+
+Build the source distribution and wheel with:
+
+```sh
+uv build
+```
+
+Both files are written to `dist/`. The default command builds the wheel from the
+source distribution, checking that the source archive can be extracted and rebuilt.
 
 The GitHub repository `ashesh808/CS269-Evalgen` is connected to the Vercel project
 `808-atoms/cs269-evalgen`. Every push to `main` creates a production deployment.
