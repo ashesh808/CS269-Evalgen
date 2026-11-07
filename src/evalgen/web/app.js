@@ -21,6 +21,12 @@ const OUTPUT_FORMATS = {
 const state = {
   prompt: '',          // prompt the current responses came from
   outputFormat: 'text', // format recorded when these responses were sampled
+  evaluationMode: 'source',
+  evaluationPreference: null, // an explicit choice is retained across artifact runs
+  visionModels: [],
+  catalogModels: [],
+  screenshotRenderer: { available: false, reason: 'Checking screenshot capture support.' },
+  capturing: false,
   responses: [],       // { text, grade: true | false | null, feedback }
   criteria: [],        // { id, title, description, kind, on, keep, assertions, results, errors }
   suggesting: false,
@@ -66,11 +72,12 @@ const label = (c) => (c.description ? `${c.title}: ${c.description}` : c.title);
 const graded = () => state.responses.filter((r) => r.grade !== null).length;
 const implementing = () => state.criteria.some((c) => c.status === 'generating' || c.status === 'running');
 const kindLabel = (c) => c.kind === 'python' ? 'Code' : 'LLM';
-const canExport = () => state.responses.length > 0 && !state.querying && !state.suggesting && !implementing() && !state.exporting;
+const canExport = () => state.responses.length > 0 && !state.querying && !state.suggesting && !state.capturing && !implementing() && !state.exporting;
 
 function invalidateCriterion(c) {
   c.runId = (c.runId || 0) + 1;
-  Object.assign(c, { status: 'draft', assertions: [], results: null, errors: [], error: '', completed: 0, totalChecks: 0 });
+  Object.assign(c, { status: 'draft', assertions: [], results: null, errors: [], error: '', completed: 0, totalChecks: 0,
+    evaluationMode: null, builtEvaluationMode: null });
   invalidateReport();
 }
 
@@ -98,11 +105,19 @@ function toast(message) {
   toastTimer = setTimeout(() => box.classList.remove('show'), 6000);
 }
 
+function requestJson(body) {
+  const encoded = JSON.stringify(body);
+  if (new TextEncoder().encode(encoded).length > 4_200_000) {
+    throw new Error('This request is too large. Generate fewer responses or use shorter sources, then retry.');
+  }
+  return encoded;
+}
+
 async function api(path, body) {
   const response = await fetch(path, {
     method: body === undefined ? 'GET' : 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? undefined : requestJson(body),
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -114,7 +129,7 @@ async function api(path, body) {
 
 async function evaluateStream(body, onEvent) {
   const response = await fetch('/api/evaluate/stream', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: requestJson(body),
   });
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
@@ -207,6 +222,116 @@ function queueResultRefresh() {
 
 // ---------- Pipeline ----------
 
+let screenshotJob = null;
+
+function screenshotUnavailableReason() {
+  if (!state.screenshotRenderer.available) return state.screenshotRenderer.reason || 'Screenshot capture is unavailable on this server.';
+  if (!state.visionModels.length) return 'No image-capable evaluator was found in the model catalog. Source-only grading is available.';
+  return '';
+}
+
+function saveModels() {
+  try { localStorage.setItem(MODELS_KEY, JSON.stringify(state.models)); } catch (e) { /* storage blocked */ }
+}
+
+function refreshEvaluatorModels() {
+  const select = $('eval-model');
+  const names = state.evaluationMode === 'screenshot' ? state.visionModels : state.catalogModels;
+  if (!names.length) return;
+  const current = state.models.evaluator;
+  const chosen = names.includes(current) ? current
+    : names.includes(state.models.prompt) ? state.models.prompt : names[0];
+  select.replaceChildren(...names.map((id) => el('option', { value: id }, id)));
+  select.value = chosen;
+  state.models.evaluator = chosen;
+  if (chosen !== current) saveModels();
+}
+
+function applyEvaluationDefault() {
+  const previous = state.evaluationMode;
+  state.evaluationMode = state.outputFormat === 'text' ? 'source'
+    : state.evaluationPreference || (screenshotUnavailableReason() ? 'source' : 'screenshot');
+  if (previous !== state.evaluationMode) state.criteria.forEach(invalidateCriterion);
+  refreshEvaluatorModels();
+}
+
+function setEvaluationMode(mode) {
+  if (!['source', 'screenshot'].includes(mode) || mode === state.evaluationMode) return;
+  if (state.querying || state.suggesting || state.capturing || implementing()) return;
+  if (mode === 'screenshot' && screenshotUnavailableReason()) {
+    toast(screenshotUnavailableReason());
+    render();
+    return;
+  }
+  state.evaluationMode = mode;
+  state.evaluationPreference = mode;
+  state.criteria.forEach(invalidateCriterion);
+  refreshEvaluatorModels();
+  queueResultRefresh();
+  render();
+}
+
+async function ensureScreenshots() {
+  if (state.outputFormat === 'text') throw new Error('Screenshot grading is available for SVG and HTML responses.');
+  if (screenshotUnavailableReason()) throw new Error(screenshotUnavailableReason());
+  const responses = state.responses;
+  const generation = state.datasetGeneration;
+  if (!responses.length) throw new Error('Generate responses before capturing screenshots.');
+  if (screenshotJob?.responses === responses && screenshotJob.generation === generation) return screenshotJob.promise;
+  const failed = responses.filter((response) => response.screenshotError);
+  if (failed.length) throw new Error('Some screenshots could not be captured. Use Retry screenshots before screenshot grading.');
+  const pending = responses.map((response, index) => ({ response, index })).filter(({ response }) => !response.screenshot?.data_url);
+  if (!pending.length) return;
+  const current = () => generation === state.datasetGeneration && responses === state.responses;
+  const job = { generation, responses, promise: null };
+  screenshotJob = job;
+  state.capturing = true;
+  render();
+  job.promise = (async () => {
+    try {
+      const result = await api('/api/screenshots', {
+        outputs: pending.map(({ response }) => response.text), output_format: state.outputFormat,
+      });
+      if (!current()) throw new Error('The responses changed while screenshots were being captured.');
+      if (!Array.isArray(result.screenshots) || result.screenshots.length !== pending.length) {
+        throw new Error('The screenshot renderer returned an incomplete result.');
+      }
+      result.screenshots.forEach((screenshot, index) => {
+        const response = pending[index].response;
+        if (window.EvalGenArtifacts.isScreenshot(screenshot)) {
+          response.screenshot = screenshot;
+          response.screenshotError = '';
+        } else {
+          response.screenshot = null;
+          response.screenshotError = typeof screenshot?.error === 'string' ? screenshot.error : 'The renderer returned no usable screenshot.';
+        }
+      });
+      if (responses.some((response) => response.screenshotError)) {
+        throw new Error('Some screenshots could not be captured. Review the capture status and retry.');
+      }
+    } catch (error) {
+      if (current()) pending.forEach(({ response }) => {
+        if (!response.screenshot && !response.screenshotError) response.screenshotError = error.message;
+      });
+      throw error;
+    } finally {
+      if (screenshotJob === job) {
+        screenshotJob = null;
+        state.capturing = false;
+        render();
+      }
+    }
+  })();
+  return job.promise;
+}
+
+async function captureScreenshots() {
+  if (state.querying || state.capturing || state.suggesting || implementing()) return;
+  state.responses.forEach((response) => { response.screenshotError = ''; });
+  try { await ensureScreenshots(); }
+  catch (error) { toast(error.message); }
+}
+
 async function runPrompt() {
   if (state.querying) return;
   const prompt = $('prompt').value.trim();
@@ -222,6 +347,8 @@ async function runPrompt() {
   const outputFormat = $('output-format').value;
   const sampleModel = state.models.prompt || state.defaultModel;
   const generation = ++state.datasetGeneration;
+  screenshotJob = null;
+  state.capturing = false;
   state.querying = true;
   reportSeq += 1;
   samplingSeq += 1;
@@ -245,6 +372,7 @@ async function runPrompt() {
     state.sampleModel = sampleModel;
     state.sampledAt = new Date().toISOString();
     state.responses = outputs.map((text) => ({ text, grade: null, feedback: '' }));
+    applyEvaluationDefault();
     state.criteria.forEach(invalidateCriterion);
     state.report = null;
     state.reported = [];
@@ -277,12 +405,15 @@ async function suggest() {
   state.suggesting = true;
   render();
   try {
+    if (state.evaluationMode === 'screenshot') await ensureScreenshots();
     const { criteria } = await api('/api/criteria', {
       prompt: state.prompt,
       output_format: state.outputFormat,
+      evaluation_mode: state.evaluationMode,
       graded: state.responses
         .filter((r) => r.grade !== null)
-        .map((r) => ({ output: r.text, good: r.grade, feedback: r.feedback })),
+        .map((r) => ({ output: r.text, good: r.grade, feedback: r.feedback,
+          ...(state.evaluationMode === 'screenshot' ? { screenshot: r.screenshot.data_url } : {}) })),
       existing: state.criteria.map((c) => c.title),
       model: state.models.evaluator,
     });
@@ -322,6 +453,8 @@ async function implement(criterion) {
     criterion.status = 'generating';
     criterion.built = label(criterion);
     criterion.builtKind = criterion.kind;
+    criterion.evaluationMode = criterion.kind === 'python' ? 'source' : state.evaluationMode;
+    criterion.builtEvaluationMode = criterion.evaluationMode;
     criterion.model = state.models.evaluator;
     criterion.error = '';
     criterion.errors = [];
@@ -329,8 +462,11 @@ async function implement(criterion) {
     criterion.completed = 0;
     criterion.totalChecks = 0;
     render();
+    if (criterion.evaluationMode === 'screenshot') await ensureScreenshots();
+    if (!current()) return;
     const { assertions } = await api('/api/assertions', {
       prompt: state.prompt, output_format: state.outputFormat,
+      evaluation_mode: criterion.evaluationMode,
       criteria: [label(criterion)], kinds: [criterion.kind], model: criterion.model,
     });
     if (!current()) return;
@@ -347,6 +483,8 @@ async function implement(criterion) {
     await evaluateStream({
       prompt: state.prompt,
       output_format: state.outputFormat,
+      evaluation_mode: criterion.evaluationMode,
+      ...(criterion.evaluationMode === 'screenshot' ? { screenshots: state.responses.map((r) => r.screenshot.data_url) } : {}),
       assertions: [criterion.assertions],
       kinds: [criterion.kind],
       outputs: state.responses.map((r) => r.text),
@@ -462,20 +600,24 @@ function selectionMessage(criterion, report = reportFor(criterion)) {
 function captureSessionSnapshot() {
   const criteria = state.criteria.map((c) => {
     const changed = c.status !== 'draft' && ((c.built != null && c.built !== label(c))
-      || (c.builtKind != null && c.builtKind !== c.kind));
+      || (c.builtKind != null && c.builtKind !== c.kind)
+      || (c.builtEvaluationMode != null && c.builtEvaluationMode !== (c.kind === 'python' ? 'source' : state.evaluationMode)));
     return {
       id: c.id, title: c.title, description: c.description, kind: c.kind,
       on: c.on, keep: c.keep, status: changed ? 'draft' : c.status,
       assertions: changed ? [] : c.assertions, results: changed ? null : c.results,
       errors: changed ? [] : c.errors, error: changed ? '' : c.error,
       model: c.model, built: c.built, builtKind: c.builtKind,
+      evaluationMode: changed ? null : c.evaluationMode, builtEvaluationMode: changed ? null : c.builtEvaluationMode,
       completed: changed ? 0 : c.completed, totalChecks: changed ? 0 : c.totalChecks,
     };
   });
   return JSON.parse(JSON.stringify({
     prompt: state.prompt,
     outputFormat: state.outputFormat,
-    responses: state.responses.map((r) => ({ text: r.text, grade: r.grade, feedback: r.feedback })),
+    evaluationMode: state.evaluationMode,
+    responses: state.responses.map((r) => ({ text: r.text, grade: r.grade, feedback: r.feedback,
+      screenshot: r.screenshot || null, screenshotError: r.screenshotError || '' })),
     criteria, threshold: state.threshold, models: { ...state.models },
     defaultModel: state.defaultModel, sampleModel: state.sampleModel, sampledAt: state.sampledAt,
     sampling: null, nextHigh: state.wizard.nextHigh,
@@ -570,6 +712,31 @@ function renderPromptNode() {
   $('eval-model').disabled = state.querying || implementing() || state.suggesting;
 }
 
+function renderEvaluationControls() {
+  $('evaluation-controls').hidden = state.outputFormat === 'text' || !state.responses.length;
+  const select = $('evaluation-mode');
+  const unavailable = screenshotUnavailableReason();
+  const locked = state.querying || state.suggesting || state.capturing || implementing();
+  select.value = state.evaluationMode;
+  select.disabled = locked;
+  select.querySelector('option[value="screenshot"]').disabled = Boolean(unavailable);
+  const captured = state.responses.filter((r) => r.screenshot?.data_url).length;
+  const errors = state.responses.filter((r) => r.screenshotError);
+  const button = $('capture-screenshots');
+  button.hidden = state.evaluationMode !== 'screenshot' || (!errors.length && captured === state.responses.length);
+  button.disabled = locked || Boolean(unavailable);
+  button.textContent = errors.length ? 'Retry screenshots' : state.capturing ? 'Capturing…' : 'Capture screenshots';
+  button.classList.toggle('busy', state.capturing);
+  const status = $('screenshot-status');
+  status.classList.toggle('error', errors.length > 0 || (state.evaluationMode === 'screenshot' && Boolean(unavailable)));
+  status.textContent = state.evaluationMode === 'source'
+    ? unavailable || 'LLM and Code graders inspect source only. Choose Source + screenshot for visual grading.'
+    : unavailable || (state.capturing ? `Capturing ${state.responses.length - captured} rendered preview${state.responses.length - captured === 1 ? '' : 's'}…`
+      : errors.length ? `${errors.length} screenshot${errors.length === 1 ? '' : 's'} failed: ${errors[0].screenshotError}`
+        : captured ? `${captured} screenshot${captured === 1 ? '' : 's'} ready. LLM graders use source + the captured image; Code graders use source.`
+          : 'Screenshots are captured before visual grading. Capture now to inspect them. Code graders use source.');
+}
+
 function renderEvalNode() {
   const body = $('eval-body');
   const built = state.criteria.filter((c) => c.on && c.status !== 'draft');
@@ -625,6 +792,7 @@ function gradeMark(grade) {
 function responseContent(response, index, compact = false) {
   return window.EvalGenArtifacts.createViewer(response.text, {
     format: state.outputFormat, compact,
+    screenshot: response.screenshot,
     key: `${state.datasetGeneration}-${compact ? 'table' : 'grade'}-${index}`,
   });
 }
@@ -633,6 +801,8 @@ let tableSignature = null;
 let tableResponses = null;
 function renderTable() {
   const body = $('table-body');
+  state.responses.forEach((response, index) => window.EvalGenArtifacts.updateScreenshot(
+    `${state.datasetGeneration}-table-${index}`, response.screenshot));
   const columns = state.criteria.filter((c) => c.on && c.keep && c.status !== 'draft');
   // Leave previews mounted while unrelated progress updates arrive. Removing an
   // iframe resets its document, including any interaction the user is reviewing.
@@ -884,7 +1054,9 @@ function screenGrade(preservePreview = false) {
       el('button', { class: 'nav-btn', title: 'Next', disabled: n < 2, onclick: () => move(1) }, icon('right', 22)),
     ),
     el('div', { class: 'response-count' }, `Response ${w.index + 1} of ${n} · ${count} graded`),
-    artifact ? el('p', { class: 'sampling-note' }, 'Grade the preview and source. Automated graders inspect the source; include visual observations in your feedback.') : null,
+    artifact ? el('p', { class: 'sampling-note' }, state.evaluationMode === 'screenshot'
+      ? 'LLM graders inspect the source and a screenshot of the initial render. Use the Screenshot tab to see the exact image; live preview interactions are not captured.'
+      : 'Grade the preview and source. Automated graders inspect the source; choose Source + screenshot for visual grading.') : null,
     el('p', { class: 'sampling-note' }, 'As checks finish, the next responses alternate between likely problems and likely passes. Use the arrows to review any response.'),
     el('div', { class: 'context' },
       el('div', { class: 'panel' },
@@ -965,7 +1137,7 @@ function reportCard(c) {
     el('div', { class: 'rcard-body' },
       el('div', { class: 'rcard-text' },
         c.description ? el('span', { class: 'rcard-desc' }, c.description) : null,
-        el('span', { class: 'rcard-kind' }, `${kindLabel(c)} · ${c.model || 'default'}`),
+        el('span', { class: 'rcard-kind' }, `${kindLabel(c)} · ${c.evaluationMode === 'screenshot' ? 'source + screenshot · ' : ''}${c.model || 'default'}`),
         chosen !== null
           ? el('pre', { class: 'chosen' }, c.assertions[chosen])
           : el('span', { class: 'hint' }, selectionMessage(c, report)),
@@ -1056,6 +1228,7 @@ function renderWizard() {
     && mountedRow.dataset.responseKey === `${state.datasetGeneration}-${state.sampledAt}-${state.wizard.index}`;
   if (sameResponse) {
     const r = state.responses[state.wizard.index];
+    window.EvalGenArtifacts.updateScreenshot(`${state.datasetGeneration}-grade-${state.wizard.index}`, r.screenshot);
     const box = mountedRow.querySelector('.response-box');
     box.classList.toggle('good', r.grade === true);
     box.classList.toggle('bad', r.grade === false);
@@ -1082,6 +1255,7 @@ function renderWizard() {
 
 function render() {
   renderPromptNode();
+  renderEvaluationControls();
   renderEvalNode();
   renderTable();
   renderExportControls();
@@ -1091,6 +1265,8 @@ function render() {
 // ---------- Events ----------
 
 $('btn-run').addEventListener('click', runPrompt);
+$('evaluation-mode').addEventListener('change', (event) => setEvaluationMode(event.target.value));
+$('capture-screenshots').addEventListener('click', captureScreenshots);
 $('output-format').addEventListener('change', () => {
   const format = OUTPUT_FORMATS[$('output-format').value];
   $('output-format-hint').textContent = format.hint || '';
@@ -1160,7 +1336,9 @@ const QUERY_MODELS = [
   { id: 'inception/mercury-3', label: 'Mercury 3 · Fast, low cost' },
 ];
 
-function fillModels(models, fallback) {
+function fillModels(models, fallback, visionModels = []) {
+  state.catalogModels = models.includes(fallback) ? models : [fallback, ...models];
+  state.visionModels = visionModels.filter((id) => state.catalogModels.includes(id));
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(MODELS_KEY)) || {}; } catch (e) { /* storage blocked */ }
   const queryOptions = QUERY_MODELS.filter(({ id }) => models.includes(id));
@@ -1176,9 +1354,12 @@ function fillModels(models, fallback) {
     state.models[role] = select.value;
     select.addEventListener('change', () => {
       state.models[role] = select.value;
-      try { localStorage.setItem(MODELS_KEY, JSON.stringify(state.models)); } catch (e) { /* storage blocked */ }
+      saveModels();
     });
   });
+  // A late catalog response must not change the input mode of work already built.
+  if (!state.suggesting && state.criteria.every((c) => c.status === 'draft')) applyEvaluationDefault();
+  render();
 }
 
 (async function boot() {
@@ -1189,10 +1370,11 @@ function fillModels(models, fallback) {
     state.defaultModel = info.model;
     state.threshold = info.ffr_threshold;
     state.pythonSandbox = info.python_sandbox || { available: false, reason: 'This server does not provide Python evaluation.' };
+    state.screenshotRenderer = info.screenshot_renderer || { available: false, reason: 'This server does not provide screenshot capture.' };
     render();
     try {
-      const { models, default: fallback } = await api('/api/models');
-      fillModels(models, fallback);
+      const { models, default: fallback, vision_models: visionModels } = await api('/api/models');
+      fillModels(models, fallback, visionModels || []);
     } catch (error) {
       fillModels([], info.model);
       toast(`Could not list models, using ${info.model}: ${error.message}`);

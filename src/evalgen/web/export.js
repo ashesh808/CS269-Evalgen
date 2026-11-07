@@ -19,6 +19,20 @@
   const status = (value) => ['draft', 'generating', 'running', 'done', 'error'].includes(value) ? value : 'unknown';
   const outputFormat = (value) => ['text', 'svg', 'html'].includes(value) ? value : 'text';
   const formatName = (value) => ({ text: 'Text', svg: 'SVG logo / vector', html: 'HTML / CSS / JavaScript' })[outputFormat(value)];
+  const evaluationMode = (value) => value === 'screenshot' ? 'screenshot' : 'source';
+  const inputName = (value) => evaluationMode(value) === 'screenshot' ? 'Source + screenshot' : 'Source only';
+
+  function screenshot(value) {
+    if (!value || typeof value !== 'object') return null;
+    const data = text(value.data_url);
+    if (data.length > 700000 || !/^data:image\/png;base64,iVBORw0KGgo[A-Za-z0-9+/]*={0,2}$/.test(data)) return null;
+    return {
+      data_url: data, width: count(value.width), height: count(value.height),
+      viewport: { width: count(value.viewport?.width), height: count(value.viewport?.height) },
+      source_hash: /^[a-f0-9]{64}$/.test(text(value.source_hash)) ? value.source_hash : null,
+      captured_at: utc(value.captured_at),
+    };
+  }
 
   function utc(value, required = false) {
     const date = value instanceof Date ? value : new Date(value);
@@ -58,6 +72,7 @@
     const responses = array(source.responses).map((response, index) => ({
       id: `response-${index + 1}`, index,
       text: text(response?.text), grade: bool(response?.grade), feedback: text(response?.feedback),
+      screenshot: screenshot(response?.screenshot), screenshot_error: diagnostic(response?.screenshotError),
     }));
     const rawReport = source.report && typeof source.report === 'object' ? source.report : null;
     const reports = new Map();
@@ -72,6 +87,7 @@
       const enabled = c.on !== false;
       const kept = c.keep !== false;
       const kind = c.kind === 'python' ? 'python' : 'llm';
+      const mode = kind === 'python' ? 'source' : evaluationMode(c.evaluationMode || c.builtEvaluationMode);
       const criterionStatus = status(c.status);
       const sources = array(c.assertions);
       // A draft retains no claim about the model used in a previous, invalidated run.
@@ -87,6 +103,7 @@
         return {
           index: candidateIndex, kind, model: usedModel, generation_model: usedModel,
           evaluation_model: kind === 'llm' ? usedModel : null,
+          evaluation_mode: mode,
           source: text(candidate), verdicts, errors, complete,
           unknown_count: verdicts.filter((value) => value === null).length,
           score: score(array(report?.scores)[candidateIndex]), selected: false,
@@ -100,6 +117,7 @@
       return {
         id, index, title: text(c.title), description: text(c.description), kind,
         enabled, kept, active: enabled && kept, status: criterionStatus, model: usedModel,
+        evaluation_mode: mode,
         error: diagnostic(c.error), selected_index: selected, candidates,
       };
     });
@@ -143,6 +161,7 @@
       },
       prompt: text(source.prompt),
       output_format: outputFormat(source.outputFormat),
+      evaluation_mode: evaluationMode(source.evaluationMode),
       models: {
         actual_sample_model: model(source.sampleModel) || defaultModel,
         current_query_model: model(source.models?.prompt) || defaultModel,
@@ -208,7 +227,7 @@
       + `<td>${outcome(candidate.verdicts[index])}</td><td>${candidate.errors[index] ? escape(candidate.errors[index]) : '—'}</td></tr>`).join('');
     return `<section class="candidate"><h4>Candidate ${candidate.index + 1}`
       + `${candidate.selected ? ' <span class="badge selected">Selected</span>' : ''}</h4>`
-      + `<p class="meta">${kindName(candidate.kind)} · ${candidate.complete ? 'All checks completed' : 'Checks unavailable or incomplete'} · Generation model: ${shown(candidate.generation_model)}</p>`
+      + `<p class="meta">${kindName(candidate.kind)} · ${inputName(candidate.evaluation_mode)} · ${candidate.complete ? 'All checks completed' : 'Checks unavailable or incomplete'} · Generation model: ${shown(candidate.generation_model)}</p>`
       + `<pre class="source"><code>${escape(candidate.source)}</code></pre>`
       + metrics(availableScore) + confusion(availableScore)
       + `<table><caption>Candidate verdicts</caption><thead><tr><th>Output</th><th>Verdict</th><th>Error</th></tr></thead><tbody>${rows}</tbody></table></section>`;
@@ -235,6 +254,9 @@
     }).join('');
     return `<article class="response"><h3>Response ${response.index + 1} <span class="badge">${humanGrade(response.grade)}</span></h3>`
       + (outputFormat(format) === 'text' ? '' : `<p class="meta">Source · ${formatName(format)}</p>`)
+      + (response.screenshot ? `<figure><img class="screenshot" src="${escape(response.screenshot.data_url)}" alt="Rendered screenshot for response ${response.index + 1}">`
+        + `<figcaption class="meta">Initial render · viewport ${shown(response.screenshot.viewport.width)} × ${shown(response.screenshot.viewport.height)} · image ${shown(response.screenshot.width)} × ${shown(response.screenshot.height)}</figcaption></figure>` : '')
+      + (response.screenshot_error ? `<p class="error">Screenshot unavailable: ${escape(response.screenshot_error)}</p>` : '')
       + `<pre>${escape(response.text)}</pre>`
       + (response.feedback ? `<p><strong>Human feedback</strong></p><pre class="feedback">${escape(response.feedback)}</pre>` : '')
       + (rows ? `<table><caption>Selected evaluator verdicts</caption><thead><tr><th>Criterion</th><th>Included</th><th>Candidate</th><th>Verdict</th></tr></thead><tbody>${rows}</tbody></table>` : '')
@@ -255,7 +277,7 @@
     if (complete && summary.unknown_verdict_count) notices.push('Incomplete or failed alternatives do not invalidate the fully selected evaluator set.');
     return '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
       + '<meta name="viewport" content="width=device-width,initial-scale=1">'
-      + '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'none\'; style-src \'unsafe-inline\'; img-src \'none\'; font-src \'none\'; connect-src \'none\'; object-src \'none\'; base-uri \'none\'; form-action \'none\'">'
+      + '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'none\'; style-src \'unsafe-inline\'; img-src data:; font-src \'none\'; connect-src \'none\'; object-src \'none\'; base-uri \'none\'; form-action \'none\'">'
       + '<title>EvalGen session report</title><style>'
       + ':root{color-scheme:light;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172431;background:#edf1f4;line-height:1.55}'
       + '*{box-sizing:border-box}body{margin:0}main{max-width:1100px;margin:32px auto;background:#fff;padding:44px 52px;border-radius:12px;border:1px solid #d8e0e7}'
@@ -268,6 +290,7 @@
       + 'table{border-collapse:collapse;width:100%;font-size:13px;margin:16px 0;table-layout:fixed}caption{text-align:left;font-weight:650;margin-bottom:7px}th,td{text-align:left;vertical-align:top;padding:9px 11px;border:1px solid #dbe2e8;overflow-wrap:anywhere}thead th{background:#f1f5f8}tbody th{font-weight:500}.compact{max-width:680px}'
       + 'pre{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;tab-size:4;font:13px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;background:#f7f9fb;border:1px solid #e0e6eb;padding:16px;border-radius:5px;margin:12px 0}.source{background:#f3f6f8}.feedback{border-left:3px solid #b7c8d8}'
       + '.response,.criterion{padding:22px 0;border-bottom:1px solid #dce4eb}.candidate{margin:22px 0 12px;padding:20px;border:1px solid #d6e1e8;border-radius:7px}footer{font-size:12px;color:#526575;margin-top:34px;border-top:1px solid #dce4eb;padding-top:16px}'
+      + 'figure{margin:16px 0}.screenshot{display:block;max-width:100%;height:auto;max-height:1000px;object-fit:contain;object-position:left top;border:1px solid #dce4eb}figcaption{margin-top:6px}'
       + '@media(max-width:700px){main{margin:0;padding:24px 18px;border-radius:0}.stats,.metrics{grid-template-columns:1fr}.candidate{padding:14px}h1{font-size:28px}}'
       + '@page{size:auto;margin:16mm}@media print{:root{background:#fff}main{margin:0;max-width:none;border:0;padding:0;border-radius:0}h2,h3,h4,caption{break-after:avoid}.metrics,.stats,thead{break-inside:avoid}.candidate{border-radius:0}pre{font-size:10px}table{font-size:10px}thead{display:table-header-group}a{color:inherit;text-decoration:none}footer{break-inside:avoid}}'
       + '</style></head><body><main><header><div class="eyebrow">EvalGen · Session report</div><h1>Evaluation session</h1>'
@@ -279,6 +302,7 @@
       + '<section><h2>Prompt and model provenance</h2>'
       + `<pre>${escape(session.prompt)}</pre><table><tbody><tr><th>Model that produced these responses</th><td>${shown(session.models.actual_sample_model)}</td></tr>`
       + `<tr><th>Output format</th><td>${formatName(session.output_format)}</td></tr>`
+      + `<tr><th>Grading input</th><td>${inputName(session.evaluation_mode)}</td></tr>`
       + `<tr><th>Responses sampled at</th><td>${shown(session.session.sampled_at)}</td></tr><tr><th>Current query selection</th><td>${shown(session.models.current_query_model)}</td></tr>`
       + `<tr><th>Current evaluator selection</th><td>${shown(session.models.current_evaluator_model)}</td></tr><tr><th>False failure rate threshold</th><td>${percent(session.settings.ffr_threshold)}</td></tr>`
       + `<tr><th>Grading sampler</th><td>${escape(session.sampling.policy)}</td></tr></tbody></table></section>`

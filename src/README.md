@@ -15,5 +15,8 @@ evalgen/
 ├── sampling.py    selectivity, confidence, alternating grading policy
 ├── alignment.py   coverage, FFR, alignment, selection
 ├── app.py         FastAPI app
+├── rendering.py   local / isolated Vercel screenshot capture
+├── render_preview.cjs  network-blocked browser runner using the same preview document
+├── screenshot/    pinned browser runtime dependencies and lockfile
 └── web/           page, styles and fonts from kkuroma.github.io
 ```

@@ -41,6 +41,7 @@ def test_sampling_requests_self_contained_artifacts_and_preserves_source(
     assert len(llm.calls) == 2
     for messages in llm.calls:
         prompt = messages[-1]["content"]
+        assert isinstance(prompt, str)
         assert prompt.startswith("Design a bright identity\n\nOutput format:")
         assert f"Output format: {output_format.upper()}" in prompt
         assert "self-contained" in prompt

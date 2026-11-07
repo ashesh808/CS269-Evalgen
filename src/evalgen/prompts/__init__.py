@@ -7,13 +7,35 @@ Undefined template variables raise instead of rendering empty
 
 from functools import cache
 from pathlib import Path
+from typing import Literal, TypedDict
 
 from jinja2 import StrictUndefined, Template
 
 PROMPT_DIR = Path(__file__).parent
 SPLIT_MARKER = "END SYSTEM PROMPT"
 
-Message = dict[str, str]
+
+class TextPart(TypedDict):
+    type: Literal["text"]
+    text: str
+
+
+class ImageURL(TypedDict):
+    url: str
+    detail: Literal["high"]
+
+
+class ImagePart(TypedDict):
+    type: Literal["image_url"]
+    image_url: ImageURL
+
+
+ContentPart = TextPart | ImagePart
+
+
+class Message(TypedDict):
+    role: Literal["system", "user", "assistant"]
+    content: str | list[ContentPart]
 
 
 @cache

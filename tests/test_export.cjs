@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const { buildSessionExport, createSessionExport, renderSessionHtml } = require('../src/evalgen/web/export.js');
 
 const exportedAt = '2026-11-05T23:00:00.000Z';
+const screenshotPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aUdoAAAAASUVORK5CYII=';
 const perfect = () => ({
   coverage: 1, ffr: 0, alignment: 1, complete: true, known_count: 3, unknown_count: 0,
   confusion: { good_passed: 1, good_failed: 0, bad_passed: 0, bad_failed: 1, good_unknown: 0, bad_unknown: 0 },
@@ -56,6 +57,44 @@ test('serialization is deterministic for a timestamp and never mutates or aliase
   assert.deepEqual(session, buildSessionExport(snapshot, exportedAt));
   session.criteria[0].candidates[0].verdicts[0] = false;
   assert.equal(snapshot.criteria[0].results[0][0], true);
+});
+
+test('screenshot evidence and actual candidate grading input survive export', () => {
+  const snapshot = fixture();
+  snapshot.outputFormat = 'svg';
+  snapshot.evaluationMode = 'screenshot';
+  snapshot.criteria[0].evaluationMode = 'screenshot';
+  snapshot.responses[0].screenshot = { data_url: screenshotPng, width: 1, height: 1,
+    viewport: { width: 960, height: 640 }, source_hash: 'a'.repeat(64), captured_at: exportedAt };
+  const session = buildSessionExport(snapshot, exportedAt);
+  assert.equal(session.evaluation_mode, 'screenshot');
+  assert.equal(session.criteria[0].candidates[0].evaluation_mode, 'screenshot');
+  assert.deepEqual(session.responses[0].screenshot, snapshot.responses[0].screenshot);
+  const html = renderSessionHtml(session);
+  assert.match(html, /Source \+ screenshot/);
+  assert.match(html, /Initial render · viewport 960 × 640/);
+  assert.ok(html.includes(`src="${screenshotPng}"`));
+  assert.match(html, /img-src data:/);
+  assert.match(html, /script-src 'none'/);
+  assert.doesNotMatch(html, /<script\b/i);
+  session.responses[0].screenshot.viewport.width = 1;
+  assert.equal(snapshot.responses[0].screenshot.viewport.width, 960);
+});
+
+test('Python exports remain source-only and remote or executable image metadata is excluded', () => {
+  const snapshot = fixture();
+  snapshot.evaluationMode = 'screenshot';
+  snapshot.criteria[0].kind = 'python';
+  snapshot.criteria[0].evaluationMode = 'screenshot';
+  for (const image of ['https://private.example/screenshot.png', 'data:image/svg+xml,<svg onload="alert(1)"/>', 'javascript:alert(1)']) {
+    snapshot.responses[0].screenshot = { data_url: image };
+    snapshot.responses[0].screenshotError = 'Capture unavailable';
+    const session = buildSessionExport(snapshot, exportedAt);
+    assert.equal(session.responses[0].screenshot, null);
+    assert.equal(session.responses[0].screenshot_error, 'Capture unavailable');
+    assert.equal(session.criteria[0].candidates[0].evaluation_mode, 'source');
+    assert.doesNotMatch(renderSessionHtml(session), /<img\b/);
+  }
 });
 
 test('recorded model provenance takes priority over selectors changed after sampling', () => {

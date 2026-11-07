@@ -13,6 +13,19 @@
   const htmlStart = /^(?:<!--[\s\S]*?-->\s*)*(?:<!doctype\s+html\b|<html\b|<head\b|<body\b|<(?:main|div|section|header|nav|article|style|script|button|form|h[1-6]|p)\b)/i;
   const svgStart = /^(?:(?:<\?xml[\s\S]*?\?>|<!--[\s\S]*?-->)\s*)*<svg\b/i;
 
+  function isScreenshot(value) {
+    return Boolean(value && typeof value === 'object' && typeof value.data_url === 'string'
+      && value.data_url.length <= 750000
+      && /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/.test(value.data_url)
+      && Number.isInteger(value.width) && value.width > 0 && value.width <= 4096
+      && Number.isInteger(value.height) && value.height > 0 && value.height <= 4096);
+  }
+
+  function updateScreenshot(key, screenshot) {
+    const viewer = viewers.get(key);
+    if (viewer?.updateScreenshot) viewer.updateScreenshot(screenshot);
+  }
+
   function artifact(format, source) {
     return { format, source, filename: format === 'svg' ? 'design.svg' : 'website.html',
       mimeType: format === 'svg' ? 'image/svg+xml' : 'text/html' };
@@ -142,6 +155,7 @@
     const cached = key && viewers.get(key);
     if (cached && cached.source === source && cached.format === format && cached.compact === compact) {
       cached.onViewChange = options.onViewChange;
+      if (cached.updateScreenshot) cached.updateScreenshot(options.screenshot);
       return cached.element;
     }
     const design = extractArtifact(source, format);
@@ -161,7 +175,9 @@
     tabs.setAttribute('aria-label', 'Response view');
     const preview = node('button', 'artifact-tab active', 'Preview');
     const sourceButton = node('button', 'artifact-tab', 'Source');
-    [preview, sourceButton].forEach((button) => { button.type = 'button'; });
+    const screenshotButton = node('button', 'artifact-tab', 'Screenshot');
+    screenshotButton.hidden = true;
+    [preview, sourceButton, screenshotButton].forEach((button) => { button.type = 'button'; });
     const frame = node('iframe', 'artifact-preview');
     frame.title = design.format === 'svg' ? 'SVG design preview' : 'Website design preview';
     frame.setAttribute('sandbox', design.format === 'html' ? 'allow-scripts' : '');
@@ -169,31 +185,56 @@
     frame.setAttribute('allow', "camera 'none'; microphone 'none'; geolocation 'none'; clipboard-read 'none'; clipboard-write 'none'");
     frame.srcdoc = previewDocument(design);
     code.hidden = true;
+    const screenshotPanel = node('figure', 'artifact-screenshot');
+    screenshotPanel.hidden = true;
+    const screenshotImage = node('img');
+    screenshotImage.alt = 'Screenshot used by the evaluator';
+    const screenshotCaption = node('figcaption');
+    screenshotPanel.append(screenshotImage, screenshotCaption);
+    let view = 'preview';
     const show = (mode) => {
+      view = mode;
       const rendered = mode === 'preview';
       frame.hidden = !rendered;
-      code.hidden = rendered;
+      code.hidden = mode !== 'source';
+      screenshotPanel.hidden = mode !== 'screenshot';
       preview.classList.toggle('active', rendered);
-      sourceButton.classList.toggle('active', !rendered);
+      sourceButton.classList.toggle('active', mode === 'source');
+      screenshotButton.classList.toggle('active', mode === 'screenshot');
       preview.setAttribute('aria-pressed', String(rendered));
-      sourceButton.setAttribute('aria-pressed', String(!rendered));
+      sourceButton.setAttribute('aria-pressed', String(mode === 'source'));
+      screenshotButton.setAttribute('aria-pressed', String(mode === 'screenshot'));
       if (typeof entry.onViewChange === 'function') entry.onViewChange(mode);
     };
     preview.setAttribute('aria-pressed', 'true');
     sourceButton.setAttribute('aria-pressed', 'false');
+    screenshotButton.setAttribute('aria-pressed', 'false');
     preview.addEventListener('click', () => show('preview'));
     sourceButton.addEventListener('click', () => show('source'));
-    tabs.append(preview, sourceButton);
+    screenshotButton.addEventListener('click', () => show('screenshot'));
+    entry.updateScreenshot = (screenshot) => {
+      const valid = isScreenshot(screenshot);
+      screenshotButton.hidden = !valid;
+      if (valid) {
+        if (screenshotImage.src !== screenshot.data_url) screenshotImage.src = screenshot.data_url;
+        const width = screenshot.viewport?.width;
+        const height = screenshot.viewport?.height;
+        const viewport = Number.isInteger(width) && Number.isInteger(height) ? ` · viewport ${width} × ${height}` : '';
+        screenshotCaption.textContent = `Initial render · ${screenshot.width} × ${screenshot.height}${viewport}. Live preview interactions are not included.`;
+      } else if (view === 'screenshot') show('preview');
+    };
+    tabs.append(preview, sourceButton, screenshotButton);
     const save = node('button', 'artifact-download', 'Download');
     save.type = 'button';
     save.title = `Download ${design.filename}`;
     save.addEventListener('click', () => download(design));
     toolbar.append(tabs, node('span', 'artifact-format', design.format === 'svg' ? 'SVG' : 'HTML / CSS / JS'), save);
-    wrapper.append(toolbar, frame, code);
+    wrapper.append(toolbar, frame, code, screenshotPanel);
+    entry.updateScreenshot(options.screenshot);
     return wrapper;
   }
 
   function clearViewers() { viewers.clear(); }
 
-  return Object.freeze({ extractArtifact, previewDocument, createViewer, clearViewers });
+  return Object.freeze({ extractArtifact, previewDocument, createViewer, clearViewers, isScreenshot, updateScreenshot });
 }));

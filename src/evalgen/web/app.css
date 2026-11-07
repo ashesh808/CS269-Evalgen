@@ -206,6 +206,11 @@ input[type="checkbox"] { width: 1.05rem; height: 1.05rem; flex-shrink: 0; cursor
 .format-example:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Multi-Evaluator body */
+.evaluation-controls { border-bottom: 1px solid var(--surface2); padding: 0.75rem 0.9rem; display: flex; flex-direction: column; gap: 0.45rem; }
+.evaluation-control-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
+.evaluation-control-row .inline-field { flex-wrap: wrap; }
+.evaluation-controls .hint { font-size: 0.75rem; line-height: 1.5; }
+.evaluation-controls .hint.error { color: var(--red); }
 .eval-empty { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 1.5rem 0.5rem; text-align: center; }
 .eval-list { display: flex; flex-direction: column; gap: 0.4rem; }
 .eval-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.45rem 0.6rem; background: var(--base); border: 1px solid var(--surface2); border-radius: 10px; font-size: 0.875rem; }
@@ -350,6 +355,10 @@ tbody tr:hover { background: var(--surface0); }
   padding: 0.9rem 1rem; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2;
   max-height: 26rem; overflow: auto; color: var(--subtext1);
 }
+.artifact-screenshot { margin: 0; max-height: 26rem; overflow: auto; background: #fff; color: #172431; }
+.artifact-screenshot img { display: block; width: 100%; height: auto; }
+.artifact-screenshot figcaption { padding: 0.45rem 0.7rem; font-size: 0.7rem; border-top: 1px solid #d8e0e7; background: #f5f7f9; color: #526575; }
+.artifact-viewer.compact .artifact-screenshot { max-height: 19rem; }
 .artifact-viewer.compact .artifact-source { max-height: 19rem; }
 .artifact-notice { padding: 0.4rem 0.7rem; font-size: 0.7rem; color: var(--subtext0); border-top: 1px solid var(--surface2); }
 .response-count { text-align: center; font-size: 0.8rem; color: var(--subtext0); }

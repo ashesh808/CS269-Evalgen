@@ -84,6 +84,18 @@ Item: stainless steel insulated water bottle, 750 ml, keeps drinks cold for 24 h
           <span class="node-title" data-icon="list">Multi-Evaluator</span>
           <select class="model-select" id="eval-model" title="Model that suggests criteria, writes assertions and grades responses"></select>
         </div>
+        <div class="evaluation-controls" id="evaluation-controls" hidden>
+          <div class="evaluation-control-row">
+            <label class="inline-field">Grading input
+              <select class="model-select" id="evaluation-mode" aria-describedby="screenshot-status">
+                <option value="source">Source only</option>
+                <option value="screenshot">Source + screenshot</option>
+              </select>
+            </label>
+            <button type="button" class="btn export-btn" id="capture-screenshots" hidden>Capture screenshots</button>
+          </div>
+          <p class="hint" id="screenshot-status" role="status"></p>
+        </div>
         <div class="node-body" id="eval-body"></div>
       </section>
     </div>

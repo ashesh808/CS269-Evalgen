@@ -153,3 +153,54 @@ test('viewer keeps failed artifact responses readable and disables scripting for
     assert.equal(vector.children[1].attributes.sandbox, '');
   } finally { global.document = previous; }
 });
+
+const screenshot = { data_url: 'data:image/png;base64,iVBORw0KGgo=', width: 960, height: 640,
+  viewport: { width: 960, height: 640 }, source_hash: 'a'.repeat(64) };
+
+test('screenshots accept bounded PNG data URLs and reject active or remote content', () => {
+  const { isScreenshot } = require('../src/evalgen/web/artifacts.js');
+  assert.equal(isScreenshot(screenshot), true);
+  for (const value of [null, {}, { ...screenshot, data_url: 'javascript:alert(1)' },
+    { ...screenshot, data_url: 'https://example.com/screenshot.png' },
+    { ...screenshot, data_url: 'data:image/svg+xml;base64,PHN2Zz4=' },
+    { ...screenshot, data_url: 'data:image/png;base64,not valid' },
+    { ...screenshot, data_url: 'data:image/png;base64,' + 'a'.repeat(750000) },
+    { ...screenshot, width: 0 }, { ...screenshot, height: 1.5 }, { ...screenshot, height: 5000 }]) {
+    assert.equal(isScreenshot(value), false);
+  }
+});
+
+test('captured screenshot updates a mounted viewer without replacing its interactive frame', () => {
+  const previous = global.document;
+  global.document = fakeDocument();
+  try {
+    const { createViewer, clearViewers, updateScreenshot } = require('../src/evalgen/web/artifacts.js');
+    clearViewers();
+    const input = '<main><button>Interactive preview</button></main>';
+    const viewer = createViewer(input, { format: 'html', key: 'captured-output' });
+    const [toolbar, frame, code, panel] = viewer.children;
+    const [preview, source, captured] = toolbar.children[0].children;
+    assert.equal(captured.hidden, true);
+    updateScreenshot('captured-output', screenshot);
+    assert.equal(captured.hidden, false);
+    assert.equal(panel.children[0].src, screenshot.data_url);
+    assert.match(panel.children[1].textContent, /Initial render.*viewport 960 × 640/);
+    captured.listeners.click();
+    assert.equal(panel.hidden, false);
+    assert.equal(frame.hidden, true);
+    assert.equal(code.hidden, true);
+    assert.equal(captured.attributes['aria-pressed'], 'true');
+    assert.equal(createViewer(input, { format: 'html', key: 'captured-output', screenshot }), viewer);
+    assert.equal(viewer.children[1], frame, 'the live preview is never replaced by screenshot capture');
+    assert.equal(panel.hidden, false, 'background updates retain the chosen screenshot tab');
+    source.listeners.click();
+    assert.equal(code.hidden, false);
+    assert.equal(panel.hidden, true);
+    preview.listeners.click();
+    assert.equal(frame.hidden, false);
+    updateScreenshot('captured-output', { data_url: 'javascript:alert(1)' });
+    assert.equal(captured.hidden, true);
+    assert.equal(frame.hidden, false);
+    clearViewers();
+  } finally { global.document = previous; }
+});

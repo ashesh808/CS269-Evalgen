@@ -7,5 +7,9 @@ and environment isolation; they skip when no supported sandbox is available.
 ```
 uv run pytest                           # offline unit, API, sampler, sandbox tests
 uv run --env-file .env pytest -m slow     # live server from config.toml
-node --test tests/test_*.cjs              # artifact previews and session exports
+node --test tests/test_*.cjs              # artifact/screenshot viewers and session exports
 ```
+
+Visual grading API and pipeline tests use scripted models and PNG fixtures. Renderer
+tests mock process and microVM boundaries; no live model or paid sandbox is used by
+the default suite.

@@ -7,6 +7,7 @@ The parsers are lenient as local models wrap answers in markdown and stray punct
 import asyncio
 import copy
 import re
+import time
 from typing import Protocol, cast
 
 from openai import NOT_GIVEN, AsyncOpenAI
@@ -63,6 +64,8 @@ class LLMClient:
         self._model = config.model
         self._temperature = config.temperature
         self._limit = asyncio.Semaphore(config.max_concurrency)
+        self._catalog: tuple[float, list[dict[str, object]]] | None = None
+        self._catalog_lock = asyncio.Lock()
 
     async def complete(
         self,
@@ -119,9 +122,48 @@ class LLMClient:
         Raises:
             openai.APIError: The server is unreachable or has no model listing.
         """
-        page = await self._client.models.list()
         return [
-            model.id for model in page.data if getattr(model, "type", None) in (None, "language")
+            str(model["id"])
+            for model in await self._model_catalog()
+            if model.get("type") in (None, "language")
+        ]
+
+    async def _model_catalog(self) -> list[dict[str, object]]:
+        """Share a short-lived metadata lookup between model and vision selectors."""
+        async with self._catalog_lock:
+            if self._catalog is None or time.monotonic() - self._catalog[0] > 300:
+                page = await self._client.models.list()
+                self._catalog = (time.monotonic(), [model.model_dump() for model in page.data])
+            return self._catalog[1]
+
+    async def list_model_capabilities(self) -> list[dict[str, str | bool]]:
+        """Return explicit image-input support, without guessing from model names."""
+        capabilities: list[dict[str, str | bool]] = []
+        for model in await self._model_catalog():
+            if model.get("type") not in (None, "language"):
+                continue
+            modalities = model.get("modalities")
+            architecture = model.get("architecture")
+            inputs: object = None
+            outputs: object = None
+            if isinstance(modalities, dict):
+                inputs, outputs = modalities.get("input"), modalities.get("output")
+            if inputs is None and isinstance(architecture, dict):
+                inputs = architecture.get("input_modalities")
+                outputs = architecture.get("output_modalities")
+            if inputs is None:
+                inputs = model.get("input_modalities")
+                outputs = model.get("output_modalities")
+            vision = isinstance(inputs, list) and "image" in inputs
+            if isinstance(outputs, list) and "text" not in outputs:
+                vision = False
+            capabilities.append({"id": str(model["id"]), "vision": vision})
+        return capabilities
+
+    async def list_vision_models(self) -> list[str]:
+        """List language models advertised as accepting image inputs."""
+        return [
+            str(model["id"]) for model in await self.list_model_capabilities() if model["vision"]
         ]
 
 

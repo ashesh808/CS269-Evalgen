@@ -41,11 +41,32 @@ previews support simple JavaScript interactions. Previews run in isolated frames
 with external resources blocked; use inline styles, scripts, SVG, or embedded
 assets instead of external libraries and fonts.
 
-Grade the rendered designs and add visual feedback using the existing evaluator
-workflow. Automated graders inspect the response source and your feedback; they do
-not receive a screenshot or inspect the rendered browser. Code graders receive the
-original source string. The recorded output format stays with the sampled responses
-when you change the selector for a later run.
+For SVG and HTML, **Grading input → Source + screenshot** sends the response source
+and an actual browser-rendered image to an image-capable LLM evaluator. The model
+selector automatically offers models that advertise image input in the gateway
+catalog. **Source only** keeps the original workflow. Code graders always receive
+the original source string.
+
+Screenshots are captured once per response from a fresh initial render at a
+960 × 640 CSS-pixel viewport, including page content up to 2000 pixels tall. Use
+**Capture screenshots** and the **Screenshot** tab to inspect the exact image sent
+to the evaluator. A screenshot does not include clicks or edits in the interactive
+preview, and cannot prove that an interaction works. Human grades and visual
+feedback still guide criteria suggestions. Capture or image-model failures remain
+explicit errors or unknown verdicts; visual grading never silently becomes
+source-only grading.
+
+Local screenshot capture requires Node.js 22.17 or newer, npm, and Chrome or
+Chromium. Set `EVALGEN_CHROMIUM_EXECUTABLE` if the browser is not found automatically.
+The first capture installs the checked-in browser runtime lockfile into
+`~/.cache/evalgen-renderer/`. On Vercel, screenshots use an ephemeral Sandbox microVM
+with project OIDC authentication. Only npm is reachable during trusted setup;
+network access is denied before generated source is uploaded and rendered. No
+application environment or host files are exposed to the renderer.
+
+The recorded output format stays with the sampled responses when you change the
+selector for a later run. Changing grading input invalidates earlier evaluator
+implementations so their results cannot be mixed across modes.
 
 Each criterion can use an **LLM** grader or **Code**, a generated Python function with
 the signature `evaluate(response: str, prompt: str) -> bool`. To enable Code, keep Docker
@@ -93,6 +114,10 @@ through the configured gateway (uses API credits), run:
 uv run --env-file .env pytest -m slow
 ```
 
+Live visual tests also render red and blue SVG/HTML designs and verify different
+image-based verdicts. They use GPT-6.1 Terra by default; set `EVALGEN_VISION_MODEL`
+to another model that advertises image input if needed.
+
 Offline tests include actual sandbox execution and denial checks when the platform
 sandbox is available. No live LLM is used by the default suite.
 
@@ -106,6 +131,10 @@ JSON includes the prompt, recorded output format and generation model, response 
 feedback, enabled/excluded criteria, all candidate implementations and their verdicts
 and errors, the selected implementations, and freshly calculated alignment results.
 Unknown verdicts remain `null`.
+
+Screenshot sessions also retain the captured PNGs, viewport, source hashes, capture
+times, capture errors, and the grading input used by each candidate. The HTML report
+includes these images as embedded data, while generated source remains inert text.
 
 The HTML report is a standalone, readable document with response source and evaluator
 details. SVG and HTML source is escaped so report files remain script-free. Open the

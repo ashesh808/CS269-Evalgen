@@ -44,6 +44,7 @@ name = "Pipeline stages"
 type = "layers"
 layers = [
   "evalgen.app",
+  "evalgen.rendering",
   "evalgen.alignment",
   "evalgen.sampling",
   "evalgen.grading",
