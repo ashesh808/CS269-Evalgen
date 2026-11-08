@@ -59,6 +59,38 @@ test('serialization is deterministic for a timestamp and never mutates or aliase
   assert.equal(snapshot.criteria[0].results[0][0], true);
 });
 
+test('model rationales are separate from output source and remain inert in HTML', () => {
+  const snapshot = fixture();
+  snapshot.responses[0].explanation = 'I chose a warm greeting. <script>alert("x")</script> café 🌧️';
+  snapshot.responses[0].explanationStatus = 'provided';
+  snapshot.responses[0].reasoning = 'Unrecognized provider field';
+  const session = buildSessionExport(snapshot, exportedAt);
+  assert.equal(session.responses[0].text, 'Hello!');
+  assert.equal(session.responses[0].explanation, snapshot.responses[0].explanation);
+  assert.equal(session.responses[0].explanation_status, 'provided');
+  assert.equal(session.responses[1].explanation, null);
+  assert.equal(session.responses[1].explanation_status, 'unavailable');
+  assert.ok(!JSON.stringify(session).includes('Unrecognized provider field'));
+  const html = renderSessionHtml(session);
+  assert.match(html, /Model rationale/);
+  assert.match(html, /&lt;script&gt;alert\(&quot;x&quot;\)&lt;\/script&gt;/);
+  assert.match(html, /No rationale was included for this output/);
+  assert.doesNotMatch(html, /<script\b/i);
+});
+
+test('empty and unavailable rationales are never represented as provided explanations', () => {
+  const snapshot = fixture();
+  snapshot.responses[0].explanation = '   ';
+  snapshot.responses[0].explanationStatus = 'provided';
+  snapshot.responses[1].explanation = 'A field without provenance';
+  snapshot.responses[1].explanationStatus = 'unavailable';
+  const session = buildSessionExport(snapshot, exportedAt);
+  for (const response of session.responses) {
+    assert.equal(response.explanation, null);
+    assert.equal(response.explanation_status, 'unavailable');
+  }
+});
+
 test('screenshot evidence and actual candidate grading input survive export', () => {
   const snapshot = fixture();
   snapshot.outputFormat = 'svg';
@@ -109,6 +141,19 @@ test('recorded model provenance takes priority over selectors changed after samp
   snapshot.criteria[0].model = null;
   assert.equal(buildSessionExport(snapshot, exportedAt).models.actual_sample_model, 'server/default');
   assert.equal(buildSessionExport(snapshot, exportedAt).criteria[0].candidates[0].model, 'server/default');
+});
+
+test('unknown imported generation models remain unknown instead of taking the server default', () => {
+  const snapshot = fixture();
+  snapshot.sampleModel = null;
+  snapshot.sampleModelKnown = false;
+  const session = buildSessionExport(snapshot, exportedAt);
+  assert.equal(session.models.actual_sample_model, null);
+  assert.equal(session.models.current_query_model, 'query/current');
+  assert.match(renderSessionHtml(session), /Model that produced these responses<\/th><td>n\/a/);
+  snapshot.criteria[0].model = null;
+  snapshot.criteria[0].modelKnown = false;
+  assert.equal(buildSessionExport(snapshot, exportedAt).criteria[0].candidates[0].generation_model, null);
 });
 
 test('recorded output format is exported independently of current draft selection', () => {

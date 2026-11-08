@@ -72,10 +72,72 @@ def test_model_choice_reaches_the_client(fake_llm: Callable[[Responder], FakeLLM
 
 def test_sample_and_static(fake_llm: Callable[[Responder], FakeLLM]) -> None:
     api = client(fake_llm(respond))
-    outputs = api.post("/api/sample", json={"prompt": "Greet", "count": 2}).json()["outputs"]
-    assert outputs == ["a sampled output"] * 2
+    sampled = api.post("/api/sample", json={"prompt": "Greet", "count": 2}).json()
+    assert sampled == {
+        "outputs": ["a sampled output"] * 2,
+        "output_details": [{"explanation": None, "explanation_status": "unavailable"}] * 2,
+    }
     assert "EvalGen" in api.get("/").text
     assert api.get("/static/themes.js").status_code == 200
+
+
+@pytest.mark.parametrize(
+    ("output_format", "source"),
+    [
+        ("text", '  Café 雪 🙂 says "hello".\n'),
+        ("svg", '<svg xmlns="http://www.w3.org/2000/svg"><text>雪</text></svg>\n'),
+        ("html", '<!doctype html>\n<html><body><script>const x={a:"雪"}</script></body></html>\n'),
+    ],
+)
+def test_sample_explanations_are_parallel_metadata_not_evaluation_input(
+    fake_llm: Callable[[Responder], FakeLLM], output_format: str, source: str
+) -> None:
+    explanation = "Distinctive public explanation, not evaluation evidence."
+
+    def respond_with_envelope(messages: list[Message]) -> str:
+        if "<Assertion>" in messages[-1]["content"]:
+            assert source in messages[-1]["content"]
+            assert explanation not in messages[-1]["content"]
+            return "true"
+        return json.dumps(
+            {
+                "output": source,
+                "explanation": explanation,
+                "reasoning": "private-sentinel",
+                "credentials": "secret-sentinel",
+            },
+            ensure_ascii=False,
+        )
+
+    llm = fake_llm(respond_with_envelope)
+    api = client(llm)
+    response = api.post(
+        "/api/sample",
+        json={"prompt": "Original request", "count": 2, "output_format": output_format},
+    )
+    assert response.status_code == 200
+    sampled = response.json()
+    assert sampled == {
+        "outputs": [source, source],
+        "output_details": [
+            {"explanation": explanation, "explanation_status": "provided"},
+            {"explanation": explanation, "explanation_status": "provided"},
+        ],
+    }
+    assert "sentinel" not in response.text
+    assert len(llm.calls) == 2
+    evaluation = api.post(
+        "/api/evaluate",
+        json={
+            "prompt": "Original request",
+            "output_format": output_format,
+            "assertions": [["Check the answer/source"]],
+            "outputs": sampled["outputs"],
+        },
+    )
+    assert evaluation.status_code == 200
+    assert evaluation.json()["results"] == [[[True, True]]]
+    assert len(llm.calls) == 4
 
 
 def test_mixed_code_and_llm_flow(fake_llm: Callable[[Responder], FakeLLM]) -> None:

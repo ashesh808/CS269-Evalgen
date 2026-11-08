@@ -24,7 +24,7 @@ from evalgen.alignment import build_report
 from evalgen.assertions import EvaluatorKind, suggest_all
 from evalgen.config import Settings
 from evalgen.criteria import GradedOutput, suggest_criteria
-from evalgen.grading import run_matrix_detailed, run_matrix_events, sample_outputs
+from evalgen.grading import run_matrix_detailed, run_matrix_events, sample_outputs_detailed
 from evalgen.llm import ModelPool
 from evalgen.rendering import RenderingError, render_previews, renderer_status
 from evalgen.sampling import sampling_plan
@@ -371,13 +371,21 @@ def create_app(settings: Settings, llm: ModelPool) -> FastAPI:
         return {"assertions": groups}
 
     @app.post("/api/sample")
-    async def sample(body: SampleRequest) -> dict[str, list[str]]:
+    async def sample(body: SampleRequest) -> dict[str, object]:
         temperature = settings.llm.sample_temperature
         client = llm.with_model(body.model)
+        sampled = await sample_outputs_detailed(
+            client, output_prompt(body.prompt, body.output_format), body.count, temperature
+        )
         return {
-            "outputs": await sample_outputs(
-                client, output_prompt(body.prompt, body.output_format), body.count, temperature
-            )
+            "outputs": [item.output for item in sampled],
+            "output_details": [
+                {
+                    "explanation": item.explanation,
+                    "explanation_status": item.explanation_status,
+                }
+                for item in sampled
+            ],
         }
 
     @app.post("/api/evaluate")

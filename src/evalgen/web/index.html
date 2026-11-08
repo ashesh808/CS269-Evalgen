@@ -12,6 +12,8 @@
   <script defer src="/static/icons.js"></script>
   <script defer src="/static/artifacts.js"></script>
   <script defer src="/static/export.js"></script>
+  <script defer src="/static/import.js"></script>
+  <script defer src="/static/zip.js"></script>
   <script defer src="/static/app.js"></script>
 </head>
 <body>
@@ -105,8 +107,11 @@ Item: stainless steel insulated water bottle, 750 ml, keeps drinks cold for 24 h
         <span class="node-title" data-icon="table">Table View</span>
         <span class="node-meta" id="table-meta"></span>
         <div class="export-actions" aria-label="Export session">
+          <button type="button" class="btn export-btn" id="import-json" title="Review and import a saved session or JSON outputs">Import JSON</button>
+          <input type="file" id="import-session-file" accept=".json,application/json" hidden>
           <button type="button" class="btn export-btn" id="export-json" title="Download the complete session as JSON" disabled>Export JSON</button>
           <button type="button" class="btn export-btn" id="export-report" title="Download a readable HTML report that you can open or print" disabled>Export report</button>
+          <button type="button" class="btn export-btn" id="export-zip" title="Download JSON, the report, and response artifacts together" disabled>Export ZIP</button>
         </div>
       </div>
       <div class="node-body" id="table-body"></div>

@@ -68,6 +68,13 @@ The recorded output format stays with the sampled responses when you change the
 selector for a later run. Changing grading input invalidates earlier evaluator
 implementations so their results cannot be mixed across modes.
 
+Each newly generated response also requests a short **Model rationale**: a visible,
+model-authored explanation of the output's main choices. Expand it in Table View or
+the grading screen. It is produced in the same generation request and stored separately
+from the answer or artifact source; it is not a private chain-of-thought trace. If the
+model does not return the requested structured response, the original reply is kept
+and its rationale is marked unavailable. Older imported sessions can also lack rationales.
+
 Each criterion can use an **LLM** grader or **Code**, a generated Python function with
 the signature `evaluate(response: str, prompt: str) -> bool`. To enable Code, keep Docker
 running and install its official Python runtime once:
@@ -123,11 +130,11 @@ sandbox is available. No live LLM is used by the default suite.
 
 ## Session exports
 
-After generating responses, use **Export JSON** or **Export report** in the Table View
-header or the report card. Export is available once generation and evaluation have
+After generating responses, use **Export JSON**, **Export report**, or **Export ZIP** in
+the Table View header or the report card. Export is available once generation and evaluation have
 finished; human grades and criteria can still be incomplete.
 
-JSON includes the prompt, recorded output format and generation model, response source, human grades and
+JSON includes the prompt, recorded output format and generation model, response source and model rationale, human grades and
 feedback, enabled/excluded criteria, all candidate implementations and their verdicts
 and errors, the selected implementations, and freshly calculated alignment results.
 Unknown verdicts remain `null`.
@@ -138,8 +145,24 @@ includes these images as embedded data, while generated source remains inert tex
 
 The HTML report is a standalone, readable document with response source and evaluator
 details. SVG and HTML source is escaped so report files remain script-free. Open the
-report in a browser to read or print it. Both downloads capture the session
+report in a browser to read or print it. All downloads capture the session
 when you click Export; they do not reset your session or save export files on the server.
+
+**Export ZIP** bundles `session.json`, `report.html`, a short README, and individual
+response artifacts. Captured screenshots are included when available. The ZIP can be
+opened with standard archive tools; extract `session.json` to restore the session.
+
+Use **Import JSON** to load a previously exported session JSON, a JSON array of
+response strings, or an object with an `outputs` array of strings. Review the summary
+before importing; importing replaces the current session after confirmation. Full
+sessions restore grades, feedback, criteria, candidate source, recorded verdicts,
+screenshots, model provenance, and rationales. Raw output imports start without grades
+or evaluators. Imports support up to ten responses, matching the current sampling limit.
+
+Import validates the file before changing the current session. It recalculates alignment
+and sampling from the imported grades and verdicts rather than trusting saved scores.
+Import does not execute candidate Python, call an LLM, or capture new screenshots.
+Artifact previews use the same isolated viewer as generated responses.
 
 Frontend artifact and export tests use Node's built-in test runner:
 

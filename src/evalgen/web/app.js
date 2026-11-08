@@ -32,9 +32,12 @@ const state = {
   suggesting: false,
   querying: false,
   exporting: null,
+  importing: false,
+  importedModelChoices: null,
   datasetGeneration: 0,
   defaultModel: null,
   sampleModel: null,
+  sampleModelKnown: true,
   sampledAt: null,
   draft: '',           // unsent text in the add-criterion box
   report: null,
@@ -47,6 +50,11 @@ const state = {
   wizard: { open: false, screen: 'start', gradeFirst: false, index: 0, nextHigh: true, navigation: 0, reached: new Set(['start']) },
 };
 let nextId = 1;
+
+function allocateCriterionId() {
+  while (state.criteria.some((criterion) => String(criterion.id) === String(nextId))) nextId += 1;
+  return nextId++;
+}
 
 const $ = (id) => document.getElementById(id);
 
@@ -72,7 +80,8 @@ const label = (c) => (c.description ? `${c.title}: ${c.description}` : c.title);
 const graded = () => state.responses.filter((r) => r.grade !== null).length;
 const implementing = () => state.criteria.some((c) => c.status === 'generating' || c.status === 'running');
 const kindLabel = (c) => c.kind === 'python' ? 'Code' : 'LLM';
-const canExport = () => state.responses.length > 0 && !state.querying && !state.suggesting && !state.capturing && !implementing() && !state.exporting;
+const canImport = () => !state.querying && !state.suggesting && !state.capturing && !implementing() && !state.exporting && !state.importing;
+const canExport = () => state.responses.length > 0 && canImport();
 
 function invalidateCriterion(c) {
   c.runId = (c.runId || 0) + 1;
@@ -364,14 +373,21 @@ async function runPrompt() {
   status.textContent = `Sampling ${count} responses...`;
   render();
   try {
-    const { outputs } = await api('/api/sample', { prompt, count, model: sampleModel, output_format: outputFormat });
+    const { outputs, output_details: outputDetails } = await api('/api/sample', { prompt, count, model: sampleModel, output_format: outputFormat });
     if (generation !== state.datasetGeneration) return;
     state.prompt = prompt;
     state.outputFormat = outputFormat;
     window.EvalGenArtifacts.clearViewers();
     state.sampleModel = sampleModel;
+    state.sampleModelKnown = true;
     state.sampledAt = new Date().toISOString();
-    state.responses = outputs.map((text) => ({ text, grade: null, feedback: '' }));
+    state.responses = outputs.map((text, index) => {
+      const detail = Array.isArray(outputDetails) ? outputDetails[index] : null;
+      const explanation = typeof detail?.explanation === 'string' ? detail.explanation.trim() : '';
+      const provided = detail?.explanation_status === 'provided' && explanation.length > 0;
+      return { text, grade: null, feedback: '', explanation: provided ? explanation : null,
+        explanationStatus: provided ? 'provided' : 'unavailable' };
+    });
     applyEvaluationDefault();
     state.criteria.forEach(invalidateCriterion);
     state.report = null;
@@ -429,7 +445,7 @@ async function suggest() {
 
 function addCriterion(title, description = '') {
   state.criteria.push({
-    id: nextId++, title, description, kind: 'llm', on: true, keep: true,
+    id: allocateCriterionId(), title, description, kind: 'llm', on: true, keep: true,
     status: 'draft', assertions: [], results: null, errors: [], error: '', completed: 0, totalChecks: 0, runId: 0,
   });
   invalidateReport();
@@ -456,6 +472,7 @@ async function implement(criterion) {
     criterion.evaluationMode = criterion.kind === 'python' ? 'source' : state.evaluationMode;
     criterion.builtEvaluationMode = criterion.evaluationMode;
     criterion.model = state.models.evaluator;
+    criterion.modelKnown = true;
     criterion.error = '';
     criterion.errors = [];
     criterion.results = null;
@@ -607,7 +624,7 @@ function captureSessionSnapshot() {
       on: c.on, keep: c.keep, status: changed ? 'draft' : c.status,
       assertions: changed ? [] : c.assertions, results: changed ? null : c.results,
       errors: changed ? [] : c.errors, error: changed ? '' : c.error,
-      model: c.model, built: c.built, builtKind: c.builtKind,
+      model: c.model, modelKnown: c.modelKnown, built: c.built, builtKind: c.builtKind,
       evaluationMode: changed ? null : c.evaluationMode, builtEvaluationMode: changed ? null : c.builtEvaluationMode,
       completed: changed ? 0 : c.completed, totalChecks: changed ? 0 : c.totalChecks,
     };
@@ -617,16 +634,18 @@ function captureSessionSnapshot() {
     outputFormat: state.outputFormat,
     evaluationMode: state.evaluationMode,
     responses: state.responses.map((r) => ({ text: r.text, grade: r.grade, feedback: r.feedback,
+      explanation: r.explanation || null, explanationStatus: r.explanationStatus || 'unavailable',
       screenshot: r.screenshot || null, screenshotError: r.screenshotError || '' })),
     criteria, threshold: state.threshold, models: { ...state.models },
-    defaultModel: state.defaultModel, sampleModel: state.sampleModel, sampledAt: state.sampledAt,
+    defaultModel: state.defaultModel, sampleModel: state.sampleModel, sampleModelKnown: state.sampleModelKnown, sampledAt: state.sampledAt,
     sampling: null, nextHigh: state.wizard.nextHigh,
     report: null, reported: criteria.filter((c) => c.on).map((c) => c.id),
   }));
 }
 
 function downloadSessionFile(content, filename, mimeType) {
-  const url = URL.createObjectURL(new Blob([content], { type: `${mimeType};charset=utf-8` }));
+  const type = mimeType === 'application/zip' ? mimeType : `${mimeType};charset=utf-8`;
+  const url = URL.createObjectURL(new Blob([content], { type }));
   const link = document.createElement('a');
   link.href = url;
   link.download = filename;
@@ -641,7 +660,7 @@ function downloadSessionFile(content, filename, mimeType) {
 }
 
 async function exportSession(kind) {
-  if (!canExport() || !['json', 'html'].includes(kind)) return;
+  if (!canExport() || !['json', 'html', 'zip'].includes(kind)) return;
   const snapshot = captureSessionSnapshot();
   const exportedAt = new Date().toISOString();
   state.exporting = kind;
@@ -664,16 +683,114 @@ async function exportSession(kind) {
       ]);
     }
     const session = window.EvalGenExport.buildSessionExport(snapshot, exportedAt);
-    const content = kind === 'json'
-      ? `${JSON.stringify(session, null, 2)}\n`
-      : window.EvalGenExport.renderSessionHtml(session);
+    const json = `${JSON.stringify(session, null, 2)}\n`;
+    const html = kind === 'json' ? null : window.EvalGenExport.renderSessionHtml(session);
+    const content = kind === 'json' ? json : kind === 'html' ? html : createSessionZip(session, json, html);
     const stamp = exportedAt.slice(0, 19).replace(/[T:]/g, '-');
-    downloadSessionFile(content, `evalgen-session-${stamp}.${kind}`, kind === 'json' ? 'application/json' : 'text/html');
-    toast(kind === 'json' ? 'Session JSON downloaded.' : 'Report downloaded. Open the HTML file to read or print it.');
+    downloadSessionFile(content, `evalgen-session-${stamp}.${kind}`, kind === 'json' ? 'application/json' : kind === 'zip' ? 'application/zip' : 'text/html');
+    toast(kind === 'json' ? 'Session JSON downloaded.' : kind === 'zip' ? 'Session ZIP downloaded with the report and response artifacts.' : 'Report downloaded. Open the HTML file to read or print it.');
   } catch (error) {
     toast(`Could not export this session: ${error.message}`);
   } finally {
     state.exporting = null;
+    render();
+  }
+}
+
+function createSessionZip(session, json, html) {
+  if (!window.EvalGenZip) throw new Error('ZIP export is unavailable. Reload the page and try again.');
+  const entries = [
+    { name: 'session.json', content: json },
+    { name: 'report.html', content: html },
+    { name: 'README.txt', content: 'EvalGen session archive\n\nOpen report.html to read or print the report. Import session.json in EvalGen to continue this session.\nResponse artifacts are in artifacts/; saved screenshots are in screenshots/.\nResponse artifacts contain the original generated source.\nAlignment and evaluator selection are recalculated when a session is imported.\n' },
+  ];
+  session.responses.forEach((response, index) => {
+    const artifact = window.EvalGenArtifacts.extractArtifact(response.text, session.output_format);
+    entries.push({ name: `artifacts/response-${index + 1}.${artifact ? artifact.format === 'svg' ? 'svg' : 'html' : 'txt'}`,
+      content: artifact ? artifact.source : response.text });
+    if (response.screenshot?.data_url) {
+      const encoded = response.screenshot.data_url.split(',')[1];
+      entries.push({ name: `screenshots/response-${index + 1}.png`, content: Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0)) });
+    }
+  });
+  return window.EvalGenZip.createZip(entries);
+}
+
+function restoreImportedModelChoices() {
+  if (!state.importedModelChoices || !state.catalogModels.length) return;
+  for (const [role, id] of [['prompt', 'prompt-model'], ['evaluator', 'eval-model']]) {
+    const select = $(id);
+    const requested = state.importedModelChoices[role];
+    if (Array.from(select.options).some((option) => option.value === requested)) select.value = requested;
+    state.models[role] = select.value || null;
+  }
+  state.importedModelChoices = null;
+  saveModels();
+}
+
+function applyImportedSession(snapshot) {
+  state.criteria.forEach((criterion) => { criterion.runId = (criterion.runId || 0) + 1; });
+  state.datasetGeneration += 1;
+  reportSeq += 1;
+  samplingSeq += 1;
+  pendingAdvance = null;
+  screenshotJob = null;
+  clearTimeout(resultRefreshTimer);
+  resultRefreshTimer = null;
+  closeWizard();
+  Object.assign(state, {
+    prompt: snapshot.prompt, outputFormat: snapshot.outputFormat,
+    evaluationMode: snapshot.evaluationMode, evaluationPreference: snapshot.evaluationMode,
+    responses: snapshot.responses, criteria: snapshot.criteria, threshold: snapshot.threshold,
+    sampleModel: snapshot.sampleModel, sampleModelKnown: snapshot.sampleModelKnown, sampledAt: snapshot.sampledAt,
+    draft: '', report: null, reported: [], sampling: null, progress: { total: 0, done: 0 },
+    importedModelChoices: { ...snapshot.models },
+  });
+  Object.assign(state.wizard, { index: 0, nextHigh: snapshot.nextHigh, gradeFirst: false,
+    advancing: false, reached: new Set(['start']) });
+  nextId = 1;
+  while (state.criteria.some((criterion) => String(criterion.id) === String(nextId))) nextId += 1;
+  $('prompt-status').textContent = '';
+  $('prompt-status').classList.remove('error');
+  $('prompt').value = snapshot.prompt;
+  $('output-format').value = snapshot.outputFormat;
+  $('num-responses').value = Math.max(1, snapshot.responses.length);
+  const format = OUTPUT_FORMATS[snapshot.outputFormat];
+  $('output-format-hint').textContent = format.hint || '';
+  $('output-format-hint').hidden = !format.hint;
+  $('format-example').hidden = !format.example;
+  refreshEvaluatorModels();
+  restoreImportedModelChoices();
+  window.EvalGenArtifacts.clearViewers();
+  render();
+  refreshReport();
+  refreshSampling();
+}
+
+async function importSessionFile(file) {
+  if (!file || !canImport()) return;
+  state.importing = true;
+  render();
+  try {
+    if (!window.EvalGenImport) throw new Error('Session import is unavailable. Reload the page and try again.');
+    if (file.size > window.EvalGenImport.MAX_FILE_BYTES) throw new Error('Import files must be 20 MiB or smaller.');
+    const imported = window.EvalGenImport.parseSessionImport(await file.text());
+    if (state.querying || state.suggesting || state.capturing || implementing() || state.exporting) throw new Error('Wait for the current operation to finish, then import again.');
+    const { summary, warnings } = imported;
+    const message = [
+      `Replace the current session with ${summary.responseCount} responses, ${summary.criterionCount} criteria, and ${summary.candidateCount} candidate evaluators?`,
+      `${summary.gradedCount} human-graded responses; ${summary.screenshotCount} saved screenshots; ${summary.explanationCount} provided explanations.`,
+      'Existing session data will be replaced. Imported evaluator code is stored without running it. Alignment and sampling will be recalculated.',
+      ...warnings,
+    ].join('\n\n');
+    if (!window.confirm(message)) return;
+    applyImportedSession(imported.snapshot);
+    toast('Session imported. Saved grades and evaluator checks are ready to review.');
+  } catch (error) {
+    toast(`Could not import this file: ${error.message}`);
+  } finally {
+    state.importing = false;
+    $('import-session-file').value = '';
     render();
   }
 }
@@ -688,16 +805,24 @@ function exportActions() {
       class: 'btn export-btn' + (state.exporting === 'html' ? ' busy' : ''), disabled: !canExport(),
       title: 'Download a readable HTML report that you can open or print', onclick: () => exportSession('html'),
     }, 'Export report'),
+    el('button', {
+      class: 'btn export-btn' + (state.exporting === 'zip' ? ' busy' : ''), disabled: !canExport(),
+      title: 'Download JSON, the report, and response artifacts together', onclick: () => exportSession('zip'),
+    }, 'Export ZIP'),
   );
 }
 
 function renderExportControls() {
-  [['export-json', 'json'], ['export-report', 'html']].forEach(([id, kind]) => {
+  [['export-json', 'json'], ['export-report', 'html'], ['export-zip', 'zip']].forEach(([id, kind]) => {
     const button = $(id);
     button.disabled = !canExport();
     button.classList.toggle('busy', state.exporting === kind);
     button.setAttribute('aria-busy', String(state.exporting === kind));
   });
+  $('import-json').disabled = !canImport();
+  $('import-json').classList.toggle('busy', state.importing);
+  $('import-json').setAttribute('aria-busy', String(state.importing));
+  $('import-session-file').disabled = !canImport();
 }
 
 // ---------- Canvas ----------
@@ -790,11 +915,18 @@ function gradeMark(grade) {
 }
 
 function responseContent(response, index, compact = false) {
-  return window.EvalGenArtifacts.createViewer(response.text, {
+  const viewer = window.EvalGenArtifacts.createViewer(response.text, {
     format: state.outputFormat, compact,
     screenshot: response.screenshot,
     key: `${state.datasetGeneration}-${compact ? 'table' : 'grade'}-${index}`,
   });
+  const provided = response.explanationStatus === 'provided' && typeof response.explanation === 'string'
+    && response.explanation.trim().length > 0;
+  return el('div', { class: 'response-content' }, viewer,
+    el('details', { class: 'model-explanation' + (provided ? '' : ' unavailable') },
+      el('summary', {}, 'Model rationale'),
+      el('p', {}, provided ? response.explanation : 'No rationale was included for this output.'),
+    ));
 }
 
 let tableSignature = null;
@@ -859,11 +991,82 @@ function renderTable() {
 // ---------- Wizard ----------
 
 const STEPS = [['start', 'Start'], ['criteria', 'Criteria'], ['grade', 'Grade'], ['report', 'Report card']];
+let wizardSession = null;
 
 function openWizard(screen) {
+  const modal = $('wizard');
+  const dialog = modal.querySelector('.dialog');
+  if (!state.wizard.open) {
+    const trigger = document.activeElement;
+    const scroll = { x: window.scrollX, y: window.scrollY };
+    const bodyStyle = {};
+    ['overflow', 'position', 'top', 'left', 'width'].forEach((name) => { bodyStyle[name] = document.body.style[name]; });
+    const htmlOverflow = document.documentElement.style.overflow;
+    const background = Array.from(document.body.children)
+      .filter((node) => node !== modal && !node.contains(modal) && node.id !== 'toast')
+      .map((node) => ({ node, inert: node.inert }));
+    background.forEach(({ node }) => { node.inert = true; });
+    Object.assign(document.body.style, {
+      overflow: 'hidden', position: 'fixed', top: `${-scroll.y}px`, left: '0', width: '100%',
+    });
+    document.documentElement.style.overflow = 'hidden';
+    dialog.tabIndex = -1;
+    const focusable = () => Array.from(dialog.querySelectorAll(
+      'a[href], button, input, textarea, select, summary, iframe, [tabindex], [contenteditable="true"]',
+    )).filter((node) => node.tabIndex >= 0 && !node.matches(':disabled')
+      && !node.closest('[hidden], [inert]') && node.getClientRects().length > 0);
+    const focusFirst = () => (focusable()[0] || dialog).focus({ preventScroll: true });
+    const keydown = (event) => {
+      if (!state.wizard.open) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        closeWizard();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const controls = focusable();
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      const outside = !dialog.contains(document.activeElement) || document.activeElement === dialog;
+      if (!controls.length || (event.shiftKey && (document.activeElement === first || outside))) {
+        event.preventDefault();
+        (last || dialog).focus({ preventScroll: true });
+      } else if (!event.shiftKey && (document.activeElement === last || outside)) {
+        event.preventDefault();
+        first.focus({ preventScroll: true });
+      }
+    };
+    const focusin = (event) => {
+      if (state.wizard.open && !dialog.contains(event.target)) focusFirst();
+    };
+    let backdropDown = false;
+    let backdropUp = false;
+    const pointerdown = (event) => { backdropDown = event.target === modal && event.button === 0; backdropUp = false; };
+    const pointerup = (event) => { backdropUp = backdropDown && event.target === modal; };
+    const pointercancel = () => { backdropDown = false; backdropUp = false; };
+    const click = (event) => {
+      if (event.target !== modal) return;
+      // Ignore a selection/drag that started in the dialog and ended outside it.
+      event.stopImmediatePropagation();
+      const dismiss = backdropDown && backdropUp;
+      pointercancel();
+      if (dismiss) closeWizard();
+    };
+    wizardSession = {
+      trigger, triggerId: trigger?.id, triggerText: trigger?.textContent?.trim(),
+      triggerRegion: trigger?.closest?.('#eval-node') ? '#eval-node' : '#prompt-node',
+      scroll, bodyStyle, htmlOverflow, background, keydown, focusin, pointerdown, pointerup, pointercancel, click,
+    };
+    document.addEventListener('keydown', keydown, true);
+    document.addEventListener('focusin', focusin, true);
+    modal.addEventListener('pointerdown', pointerdown);
+    modal.addEventListener('pointerup', pointerup);
+    modal.addEventListener('pointercancel', pointercancel);
+    modal.addEventListener('click', click, true);
+  }
   state.wizard.open = true;
-  $('wizard').hidden = false;
-  document.body.style.overflow = 'hidden';
+  modal.hidden = false;
   go(screen);
 }
 
@@ -872,9 +1075,29 @@ function closeWizard() {
   state.wizard.advancing = false;
   pendingAdvance = null;
   state.wizard.open = false;
-  $('wizard').hidden = true;
-  document.body.style.overflow = '';
+  const modal = $('wizard');
+  modal.hidden = true;
+  const session = wizardSession;
+  wizardSession = null;
+  if (session) {
+    document.removeEventListener('keydown', session.keydown, true);
+    document.removeEventListener('focusin', session.focusin, true);
+    ['pointerdown', 'pointerup', 'pointercancel'].forEach((type) => modal.removeEventListener(type, session[type]));
+    modal.removeEventListener('click', session.click, true);
+    session.background.forEach(({ node, inert }) => { node.inert = inert; });
+    Object.assign(document.body.style, session.bodyStyle);
+    document.documentElement.style.overflow = session.htmlOverflow;
+    window.scrollTo(session.scroll.x, session.scroll.y);
+  }
   render();
+  if (session) {
+    const controls = Array.from(document.querySelectorAll(`${session.triggerRegion} button:not(:disabled)`));
+    const original = session.trigger?.isConnected && !session.trigger.disabled ? session.trigger : null;
+    const target = original || (session.triggerId && $(session.triggerId))
+      || controls.find((node) => node.textContent.trim() === session.triggerText) || controls[0]
+      || (!$('btn-run').disabled && $('btn-run')) || document.querySelector('.brand');
+    target?.focus({ preventScroll: true });
+  }
 }
 
 function go(screen) {
@@ -885,7 +1108,12 @@ function go(screen) {
   state.wizard.reached.add(screen);
   if (screen === 'report' || screen === 'criteria') state.wizard.reached.add('grade');
   render();
-  $('wizard').scrollTop = 0;
+  const body = $('wizard-body');
+  body.scrollTop = 0;
+  if (state.wizard.open) {
+    const first = body.querySelector('input:not(:disabled), textarea:not(:disabled), button:not(:disabled)');
+    (first || $('wizard-close')).focus({ preventScroll: true });
+  }
 }
 
 function screenStart() {
@@ -1072,12 +1300,14 @@ function screenGrade(preservePreview = false) {
         el('pre', {}, state.prompt),
       ),
     ),
-    el('div', { class: 'center-row' },
-      el('button', { class: 'btn bad' + (r.grade === false ? ' active' : ''), disabled: state.querying || w.advancing, onclick: () => setGrade(false) }, icon('down'), 'Bad!'),
-      el('button', { class: 'btn good' + (r.grade === true ? ' active' : ''), disabled: state.querying || w.advancing, onclick: () => setGrade(true) }, icon('up'), 'Good!'),
+    el('div', { class: 'grade-footer' },
+      el('div', { class: 'center-row' },
+        el('button', { class: 'btn bad' + (r.grade === false ? ' active' : ''), disabled: state.querying || w.advancing, onclick: () => setGrade(false) }, icon('down'), 'Bad!'),
+        el('button', { class: 'btn good' + (r.grade === true ? ' active' : ''), disabled: state.querying || w.advancing, onclick: () => setGrade(true) }, icon('up'), 'Good!'),
+      ),
+      el('div', { class: 'grade-foot' }, footer),
     ),
-    el('div', { class: 'grade-foot' }, footer),
-  ];
+  ].filter((child) => child !== null && child !== undefined && child !== false);
 }
 
 function donut(score) {
@@ -1137,7 +1367,7 @@ function reportCard(c) {
     el('div', { class: 'rcard-body' },
       el('div', { class: 'rcard-text' },
         c.description ? el('span', { class: 'rcard-desc' }, c.description) : null,
-        el('span', { class: 'rcard-kind' }, `${kindLabel(c)} · ${c.evaluationMode === 'screenshot' ? 'source + screenshot · ' : ''}${c.model || 'default'}`),
+        el('span', { class: 'rcard-kind' }, `${kindLabel(c)} · ${c.evaluationMode === 'screenshot' ? 'source + screenshot · ' : ''}${c.modelKnown === false ? 'Unknown generation model' : c.model || 'default'}`),
         chosen !== null
           ? el('pre', { class: 'chosen' }, c.assertions[chosen])
           : el('span', { class: 'hint' }, selectionMessage(c, report)),
@@ -1279,6 +1509,9 @@ $('format-example').addEventListener('click', () => {
 });
 $('export-json').addEventListener('click', () => exportSession('json'));
 $('export-report').addEventListener('click', () => exportSession('html'));
+$('export-zip').addEventListener('click', () => exportSession('zip'));
+$('import-json').addEventListener('click', () => { if (canImport()) $('import-session-file').click(); });
+$('import-session-file').addEventListener('change', (event) => importSessionFile(event.target.files[0]));
 $('wizard-close').addEventListener('click', closeWizard);
 $('wizard').addEventListener('click', (e) => { if (e.target === $('wizard')) closeWizard(); });
 document.addEventListener('keydown', (e) => {
@@ -1358,17 +1591,20 @@ function fillModels(models, fallback, visionModels = []) {
     });
   });
   // A late catalog response must not change the input mode of work already built.
-  if (!state.suggesting && state.criteria.every((c) => c.status === 'draft')) applyEvaluationDefault();
+  if (!state.importedModelChoices && !state.suggesting && state.criteria.every((c) => c.status === 'draft')) applyEvaluationDefault();
+  refreshEvaluatorModels();
+  restoreImportedModelChoices();
   render();
 }
 
 (async function boot() {
+  const bootGeneration = state.datasetGeneration;
   syncAppearance();
   render();
   try {
     const info = await api('/api/info');
     state.defaultModel = info.model;
-    state.threshold = info.ffr_threshold;
+    if (state.datasetGeneration === bootGeneration) state.threshold = info.ffr_threshold;
     state.pythonSandbox = info.python_sandbox || { available: false, reason: 'This server does not provide Python evaluation.' };
     state.screenshotRenderer = info.screenshot_renderer || { available: false, reason: 'This server does not provide screenshot capture.' };
     render();

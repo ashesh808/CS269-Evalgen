@@ -1,8 +1,10 @@
 """Execute independent candidates, retaining unknown verdicts and per-output errors."""
 
 import asyncio
+import json
 from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass
+from typing import Literal
 
 import openai
 
@@ -15,6 +17,59 @@ from evalgen.sandbox import evaluate_python_detailed
 VERDICT_ATTEMPTS = 2
 
 Verdict = bool | None
+
+SAMPLE_FORMAT_INSTRUCTIONS = """Complete the user's task and return exactly one JSON object
+with two string fields: "output" and "explanation". Put the complete task answer in
+"output", preserving its intended text and source formatting through valid JSON escaping.
+Any instructions about returning only an answer, SVG, or HTML apply to the value of
+"output": include the raw answer or complete artifact source there, without Markdown
+fences or extra commentary. In "explanation", give a concise, user-facing rationale
+of 1–3 sentences describing the answer or key design choices. Do not include hidden
+analysis or private step-by-step reasoning. Do not add other fields or surrounding prose.
+"""
+
+
+@dataclass(frozen=True)
+class SampledOutput:
+    output: str
+    explanation: str | None
+    explanation_status: Literal["provided", "unavailable"]
+
+
+def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Do not silently choose between conflicting duplicate envelope fields."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate JSON field")
+        result[key] = value
+    return result
+
+
+def _sampled_output(reply: str) -> SampledOutput:
+    """Decode explicit public fields; preserve replies that are not clear envelopes."""
+    candidate = reply.strip()
+    lines = candidate.splitlines()
+    if (
+        len(lines) >= 3
+        and lines[0].strip().lower() in ("```", "```json")
+        and lines[-1].strip() == "```"
+    ):
+        candidate = "\n".join(lines[1:-1])
+    try:
+        envelope = json.loads(candidate, object_pairs_hook=_unique_json_object)
+    except (ValueError, RecursionError):
+        return SampledOutput(reply, None, "unavailable")
+    if not isinstance(envelope, dict) or not isinstance(envelope.get("output"), str):
+        return SampledOutput(reply, None, "unavailable")
+    explanation = envelope.get("explanation")
+    if isinstance(explanation, str):
+        if explanation.strip():
+            return SampledOutput(envelope["output"], explanation.strip(), "provided")
+        return SampledOutput(envelope["output"], None, "unavailable")
+    if "explanation" in envelope and explanation is None:
+        return SampledOutput(envelope["output"], None, "unavailable")
+    return SampledOutput(reply, None, "unavailable")
 
 
 @dataclass(frozen=True)
@@ -219,6 +274,22 @@ async def sample_outputs(llm: Completer, prompt: str, count: int, temperature: f
     Returns:
         The sampled outputs.
     """
-    messages: list[Message] = [{"role": "user", "content": prompt}]
+    return [item.output for item in await sample_outputs_detailed(llm, prompt, count, temperature)]
+
+
+async def sample_outputs_detailed(
+    llm: Completer, prompt: str, count: int, temperature: float
+) -> list[SampledOutput]:
+    """Sample answers and concise explanations together, without a second model call.
+
+    The task prompt is unchanged. Only the extracted answer is used as an evaluation
+    response. A clear envelope can retain its answer without a usable explanation;
+    replies that do not match the envelope remain available in full. Clients need
+    only support the existing text completion interface.
+    """
+    messages: list[Message] = [
+        {"role": "system", "content": SAMPLE_FORMAT_INSTRUCTIONS},
+        {"role": "user", "content": prompt},
+    ]
     jobs = [llm.complete(messages, temperature=temperature) for _ in range(count)]
-    return list(await asyncio.gather(*jobs))
+    return [_sampled_output(reply) for reply in await asyncio.gather(*jobs)]

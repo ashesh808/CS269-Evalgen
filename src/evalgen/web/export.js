@@ -69,11 +69,17 @@
     const source = snapshot && typeof snapshot === 'object' ? snapshot : {};
     const exportedAt = utc(options.exportedAt || new Date().toISOString(), true);
     const defaultModel = model(source.defaultModel);
-    const responses = array(source.responses).map((response, index) => ({
-      id: `response-${index + 1}`, index,
-      text: text(response?.text), grade: bool(response?.grade), feedback: text(response?.feedback),
-      screenshot: screenshot(response?.screenshot), screenshot_error: diagnostic(response?.screenshotError),
-    }));
+    const responses = array(source.responses).map((response, index) => {
+      const explanation = text(response?.explanation).trim();
+      const provided = response?.explanationStatus === 'provided' && explanation.length > 0;
+      return {
+        id: `response-${index + 1}`, index,
+        text: text(response?.text), grade: bool(response?.grade), feedback: text(response?.feedback),
+        explanation: provided ? explanation : null,
+        explanation_status: provided ? 'provided' : 'unavailable',
+        screenshot: screenshot(response?.screenshot), screenshot_error: diagnostic(response?.screenshotError),
+      };
+    });
     const rawReport = source.report && typeof source.report === 'object' ? source.report : null;
     const reports = new Map();
     array(source.reported).forEach((id, index) => {
@@ -91,7 +97,7 @@
       const criterionStatus = status(c.status);
       const sources = array(c.assertions);
       // A draft retains no claim about the model used in a previous, invalidated run.
-      const usedModel = sources.length ? model(c.model) || defaultModel : null;
+      const usedModel = sources.length && c.modelKnown !== false ? model(c.model) || defaultModel : null;
       const report = enabled ? reports.get(key(id)) : null;
       const candidates = sources.map((candidate, candidateIndex) => {
         const rawVerdicts = array(array(c.results)[candidateIndex]);
@@ -163,7 +169,7 @@
       output_format: outputFormat(source.outputFormat),
       evaluation_mode: evaluationMode(source.evaluationMode),
       models: {
-        actual_sample_model: model(source.sampleModel) || defaultModel,
+        actual_sample_model: source.sampleModelKnown === false ? null : model(source.sampleModel) || defaultModel,
         current_query_model: model(source.models?.prompt) || defaultModel,
         current_evaluator_model: model(source.models?.evaluator) || defaultModel,
         default_model: defaultModel,
@@ -258,6 +264,10 @@
         + `<figcaption class="meta">Initial render · viewport ${shown(response.screenshot.viewport.width)} × ${shown(response.screenshot.viewport.height)} · image ${shown(response.screenshot.width)} × ${shown(response.screenshot.height)}</figcaption></figure>` : '')
       + (response.screenshot_error ? `<p class="error">Screenshot unavailable: ${escape(response.screenshot_error)}</p>` : '')
       + `<pre>${escape(response.text)}</pre>`
+      + '<p><strong>Model rationale</strong></p>'
+      + (response.explanation_status === 'provided' && response.explanation
+        ? `<pre class="explanation">${escape(response.explanation)}</pre>`
+        : '<p class="muted">No rationale was included for this output.</p>')
       + (response.feedback ? `<p><strong>Human feedback</strong></p><pre class="feedback">${escape(response.feedback)}</pre>` : '')
       + (rows ? `<table><caption>Selected evaluator verdicts</caption><thead><tr><th>Criterion</th><th>Included</th><th>Candidate</th><th>Verdict</th></tr></thead><tbody>${rows}</tbody></table>` : '')
       + '</article>';

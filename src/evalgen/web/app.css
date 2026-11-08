@@ -240,24 +240,50 @@ tbody tr:hover { background: var(--surface0); }
 
 /* ---------- Wizard dialog ---------- */
 .modal {
-  position: fixed; inset: 0; z-index: 1500; display: flex; align-items: flex-start; justify-content: center;
-  background: color-mix(in srgb, var(--crust) 70%, transparent); backdrop-filter: blur(3px);
-  padding: 4.5rem 1rem 1rem; overflow-y: auto;
+  --modal-gutter: clamp(0.75rem, 3vh, 2rem);
+  position: fixed; inset: 0; z-index: 1500; isolation: isolate;
+  display: grid; place-items: center; padding: var(--modal-gutter); overflow: hidden;
+  background: rgb(5 9 16 / 80%); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  overscroll-behavior: contain;
 }
 .dialog {
-  width: 100%; max-width: 960px; background: var(--mantle); border: 2px solid var(--overlay0);
-  border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); overflow: visible;
+  --dialog-padding: 1.5rem;
+  display: flex; flex-direction: column; width: 100%; max-width: 960px; min-height: 0;
+  max-height: calc(100vh - 2 * var(--modal-gutter)); max-height: calc(100dvh - 2 * var(--modal-gutter));
+  background: var(--mantle); border: 2px solid var(--overlay0); border-radius: 16px;
+  box-shadow: 0 28px 80px rgb(0 0 0 / 55%), 0 0 0 1px rgb(255 255 255 / 5%); overflow: hidden;
 }
 .dialog-head {
-  display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: var(--surface0);
+  position: sticky; top: 0; z-index: 30; flex-shrink: 0;
+  display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 1rem; background: var(--surface0);
   border-radius: 14px 14px 0 0; border-bottom: 1px solid var(--surface2);
 }
-.dialog-title { font-weight: 700; color: var(--primary); }
+.dialog-title { font-weight: 700; color: var(--primary); white-space: nowrap; }
+.dialog-head #wizard-close { min-width: 2.75rem; min-height: 2.75rem; flex-shrink: 0; }
+.dialog :focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 .steps { flex: 1; display: flex; gap: 0.35rem; justify-content: center; flex-wrap: wrap; }
 .step { font: inherit; font-size: 0.78rem; padding: 0.2rem 0.75rem; border-radius: 9999px; border: 1px solid var(--surface2); background: transparent; color: var(--subtext0); cursor: pointer; }
 .step:disabled { opacity: 0.4; cursor: default; }
 .step.active { background: var(--surface1); color: var(--text); border-color: var(--primary); font-weight: 600; }
-.dialog-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
+.dialog-body {
+  padding: var(--dialog-padding); display: flex; flex: 1 1 auto; flex-direction: column; gap: 1.25rem;
+  min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable;
+  scroll-padding-block: 1rem 10rem;
+}
+.dialog-body > * { flex-shrink: 0; }
+.dialog-body > .center-row:last-child, .grade-footer {
+  position: sticky; bottom: 0; z-index: 20;
+  margin: 0 calc(-1 * var(--dialog-padding)) calc(-1 * var(--dialog-padding));
+  padding: 0.85rem var(--dialog-padding); background: var(--mantle);
+  border-top: 1px solid var(--surface2); box-shadow: 0 -10px 24px color-mix(in srgb, var(--mantle) 85%, transparent);
+}
+.grade-footer { display: flex; flex-direction: column; gap: 0.65rem; }
+.dialog-body > .center-row:last-child::after, .grade-footer::after {
+  content: ''; position: absolute; top: 100%; left: 0; right: 0;
+  height: var(--dialog-padding); background: var(--mantle); pointer-events: none;
+}
+.grade-footer .grade-foot { border-top: 0; padding-top: 0; }
+.grade-footer .btn.good, .grade-footer .btn.bad { min-height: 2.75rem; }
 .screen-title { text-align: center; font-size: 1.3rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
 
 /* Wizard start (Fig. 2b) */
@@ -323,6 +349,10 @@ tbody tr:hover { background: var(--surface0); }
 .response-box.bad { border-color: var(--red); }
 .response-box.has-artifact { padding: 0; max-height: none; overflow: hidden; white-space: normal; }
 .response-box.has-artifact .artifact-viewer { border: 0; border-radius: 8px; }
+.model-explanation { margin-top: 0.7rem; border: 1px solid var(--surface2); border-radius: 8px; padding: 0.5rem 0.65rem; font-family: 'Google Sans Flex', sans-serif; white-space: normal; }
+.model-explanation summary { cursor: pointer; color: var(--subtext1); font-size: 0.78rem; font-weight: 600; }
+.model-explanation p { margin-top: 0.45rem; color: var(--subtext0); font-size: 0.78rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.model-explanation.unavailable { border-style: dashed; opacity: 0.85; }
 
 /* Artifact controls share the existing node palette; only the preview has its
    own canvas so SVG and website colors are independent of the app theme. */
@@ -441,10 +471,24 @@ tbody tr:hover { background: var(--surface0); }
 @media (max-width: 600px) {
   .navbar { width: calc(100% - 2rem); padding: 0.6rem 1rem; }
   .canvas { padding: 1.5rem 1rem 2rem; }
-  .dialog-body { padding: 1rem; }
+  .modal { --modal-gutter: 0.5rem; }
+  .dialog { --dialog-padding: 1rem; border-radius: 12px; }
+  .dialog-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.4rem; padding: 0.55rem 0.75rem; }
+  .dialog-title { grid-column: 1; grid-row: 1; }
+  .dialog-head #wizard-close { grid-column: 2; grid-row: 1; }
+  .dialog-head .steps { grid-column: 1 / -1; grid-row: 2; justify-content: stretch; }
+  .dialog-head .step { flex: 1; min-width: 0; padding: 0.3rem 0.35rem; font-size: 0.72rem; }
   .add-bar { flex-direction: column; align-items: stretch; }
   .grade-foot { flex-direction: column; align-items: stretch; }
   .table-node > .node-head .export-actions { flex-basis: 100%; justify-content: flex-start; }
   .artifact-preview { height: 23rem; }
   .artifact-format { display: none; }
+}
+@media (max-height: 600px) {
+  .modal { --modal-gutter: 0.5rem; }
+  .dialog { --dialog-padding: 1rem; }
+  .dialog-body { gap: 0.85rem; }
+  .grade-footer { gap: 0.4rem; padding-top: 0.6rem; padding-bottom: 0.6rem; }
+  .grade-footer .grade-foot { flex-direction: row; align-items: center; }
+  .grade-footer .progress { display: none; }
 }

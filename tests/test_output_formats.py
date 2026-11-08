@@ -16,7 +16,7 @@ from evalgen.sandbox import PythonEvaluation
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = {
     "svg": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><circle r="8"/></svg>',
-    "html": '<!doctype html><html><head><style>button{color:red}</style></head>'
+    "html": "<!doctype html><html><head><style>button{color:red}</style></head>"
     '<body><button id="go">Go</button><script>go.onclick=()=>go.textContent="Done"</script>'
     "</body></html>",
 }
@@ -37,7 +37,13 @@ def test_sampling_requests_self_contained_artifacts_and_preserves_source(
         json={"prompt": "Design a bright identity", "count": 2, "output_format": output_format},
     )
     assert response.status_code == 200
-    assert response.json() == {"outputs": [source, source]}
+    assert response.json() == {
+        "outputs": [source, source],
+        "output_details": [
+            {"explanation": None, "explanation_status": "unavailable"},
+            {"explanation": None, "explanation_status": "unavailable"},
+        ],
+    }
     assert len(llm.calls) == 2
     for messages in llm.calls:
         prompt = messages[-1]["content"]
@@ -65,7 +71,9 @@ def test_text_sampling_preserves_the_original_prompt_exactly(
         body["output_format"] = output_format
     response = client(llm).post("/api/sample", json=body)
     assert response.status_code == 200
-    assert llm.calls == [[{"role": "user", "content": prompt}]]
+    assert len(llm.calls) == 1
+    assert llm.calls[0][-1] == {"role": "user", "content": prompt}
+    assert llm.calls[0][0]["role"] == "system"
 
 
 @pytest.mark.parametrize("output_format", ["svg", "html"])
