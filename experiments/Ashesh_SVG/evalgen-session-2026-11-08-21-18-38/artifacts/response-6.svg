@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220" role="img" aria-labelledby="title">
+  <title id="title">Kodak</title>
+  <rect x="30" y="30" width="160" height="160" rx="36" fill="#FFD400"/>
+  <path d="M65 62h20v40l36-40h27l-42 46 44 50h-28l-37-42v42H65z" fill="#E31837"/>
+  <g fill="#E31837" fill-rule="evenodd">
+    <path d="M230 63h18v38h8l29-38h21l-37 46 40 48h-23l-31-38h-7v38h-18z"/>
+    <path d="M357 62c25 0 41 18 41 48s-16 48-41 48-41-18-41-48 16-48 41-48zm0 16c-14 0-23 11-23 32s9 32 23 32 23-11 23-32-9-32-23-32z"/>
+    <path d="M414 63h33c30 0 45 18 45 47s-15 47-45 47h-33zm18 16v62h15c18 0 27-11 27-31s-9-31-27-31z"/>
+    <path d="M501 157l35-94h19l35 94h-19l-8-23h-35l-8 23zm33-39h23l-11.5-34z"/>
+    <path d="M607 63h18v38h8l29-38h21l-37 46 40 48h-23l-31-38h-7v38h-18z"/>
+  </g>
+</svg>

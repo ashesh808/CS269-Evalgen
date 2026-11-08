@@ -1,0 +1,2195 @@
+{
+  "schema_version": 1,
+  "exported_at": "2026-11-08T20:59:34.337Z",
+  "session": {
+    "id": null,
+    "status": "complete",
+    "sampled_at": "2026-11-08T20:52:56.192Z"
+  },
+  "prompt": "Perform named entity recognition on this tweet:\n\n\"Loved the Apple event in Cupertino. Tim Cook introduced\nthe Vision Pro while #AppleEvent was trending.\"\n\nIdentify at most three well-known named entities explicitly\nmentioned in the tweet. Each should be identifiable in a\nreference source such as Wikipedia.\n\nReturn a Markdown bulleted list in this format:\n- Entity: One-sentence description\n\nDo not extract hashtags as entities. Do not invent entities.",
+  "output_format": "text",
+  "evaluation_mode": "source",
+  "models": {
+    "actual_sample_model": "openai/gpt-6.1-terra",
+    "current_query_model": "openai/gpt-6.1-terra",
+    "current_evaluator_model": "anthropic/claude-sonnet-5",
+    "default_model": "openai/gpt-oss-20b"
+  },
+  "settings": {
+    "ffr_threshold": 0
+  },
+  "sampling": {
+    "policy": "alternating",
+    "next_high": false,
+    "next_response_index": 5,
+    "confidence": [
+      0,
+      0.8333333333333334,
+      0,
+      0,
+      0.8333333333333334,
+      0
+    ],
+    "known_counts": [
+      30,
+      30,
+      30,
+      30,
+      30,
+      30
+    ],
+    "selectivities": [
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        0.8333333333333334
+      ],
+      [
+        1,
+        1,
+        0.8333333333333334
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        0,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        1
+      ]
+    ]
+  },
+  "summary": {
+    "response_count": 6,
+    "graded_count": 5,
+    "good_count": 4,
+    "bad_count": 1,
+    "ungraded_count": 1,
+    "criterion_count": 10,
+    "active_criterion_count": 10,
+    "selected_criterion_count": 10,
+    "candidate_count": 30,
+    "unknown_verdict_count": 0,
+    "candidate_error_count": 0,
+    "active_in_progress_count": 0
+  },
+  "responses": [
+    {
+      "id": "response-1",
+      "index": 0,
+      "text": "- Apple: An American technology company known for products such as the iPhone and Mac.\n- Cupertino: A city in California where Apple is headquartered.\n- Tim Cook: The chief executive officer of Apple.",
+      "grade": true,
+      "feedback": "",
+      "explanation": "These three entities are explicitly mentioned in the tweet and are well known; the hashtag is excluded.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": false,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "response-2",
+      "index": 1,
+      "text": "- Apple: An American technology company known for its consumer electronics and software.\n- Cupertino: A California city where Apple is headquartered.\n- Tim Cook: The chief executive officer of Apple.",
+      "grade": true,
+      "feedback": "",
+      "explanation": "These three well-known entities are explicitly mentioned in the tweet; the hashtag is excluded.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": false,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "response-3",
+      "index": 2,
+      "text": "- Apple: An American technology company known for products such as the iPhone and Mac.\n- Cupertino: A city in California where Apple is headquartered.\n- Tim Cook: An American business executive and the CEO of Apple.",
+      "grade": true,
+      "feedback": "",
+      "explanation": "These three entities are explicitly mentioned in the tweet and are identifiable in reference sources. The hashtag is excluded.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": false,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "response-4",
+      "index": 3,
+      "text": "- Apple: An American technology company known for products such as the iPhone and Mac.\n- Cupertino: A city in California where Apple is headquartered.\n- Tim Cook: An American business executive and CEO of Apple.",
+      "grade": false,
+      "feedback": "",
+      "explanation": "These are three well-known entities explicitly mentioned in the tweet; the hashtag is excluded.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": false,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "response-5",
+      "index": 4,
+      "text": "- Apple: An American technology company headquartered in Cupertino, California.\n- Cupertino: A city in California’s Silicon Valley.\n- Tim Cook: Apple’s chief executive officer.",
+      "grade": true,
+      "feedback": "",
+      "explanation": "These three entities are explicitly mentioned in the tweet; the hashtag is excluded.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": false,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "response-6",
+      "index": 5,
+      "text": "- Apple: An American technology company headquartered in Cupertino, California.\n- Cupertino: A city in California’s Silicon Valley.\n- Tim Cook: An American business executive and CEO of Apple.",
+      "grade": null,
+      "feedback": "",
+      "explanation": "These three entities are explicitly mentioned in the tweet; the hashtag is excluded.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": false,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "id": 1,
+      "index": 0,
+      "title": "Entity Count Limit",
+      "description": "The response includes at most three named entities, as instructed.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "anthropic/claude-sonnet-5",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "The response contains no more than three bullet points, each corresponding to a distinct named entity.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "Counting only lines that strictly follow the \"- Entity: description\" format, the total number of entities listed does not exceed three.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "Even if additional explanatory text or extra entities are mentioned outside the bulleted list, the main bulleted list itself does not exceed three entities.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "index": 1,
+      "title": "Correct Format",
+      "description": "The response uses a Markdown bulleted list in the \"Entity: Description\" format specified.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "anthropic/claude-sonnet-5",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "The response is formatted as a Markdown bulleted list, with each line starting with a \"-\" or \"*\" character followed by an entity name, a colon, and a description.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "Every single list item in the response strictly follows the exact \"Entity: Description\" pattern with no deviations in punctuation, structure, or extra formatting.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "The response generally presents the entities and their descriptions in a list-like, bulleted structure that resembles the \"Entity: Description\" format, even if minor formatting inconsistencies exist.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "index": 2,
+      "title": "No Hashtags Extracted",
+      "description": "The response does not list hashtags (e.g., #AppleEvent) as entities.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "anthropic/claude-sonnet-5",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "The response does not include \"#AppleEvent\" or any hashtag symbol (\"#\") anywhere in the list of extracted entities.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "None of the bullet points in the response treat a hashtag (including its text without the \"#\" symbol, such as \"AppleEvent\") as a named entity.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "The response strictly limits its entities to non-hashtag named entities explicitly mentioned in the tweet, with no entity derived from or referencing the hashtag \"#AppleEvent\" in any form.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "index": 3,
+      "title": "No Invented Entities",
+      "description": "The response does not introduce entities not explicitly mentioned in the tweet.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "anthropic/claude-sonnet-5",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "Every entity listed in the response's bulleted list corresponds to a word or phrase that appears verbatim (or as an unambiguous direct reference) in the original tweet text.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "The response does not include any named entity whose name or core identifying term is absent from the tweet, even if that entity is plausibly or contextually related to the tweet's subject matter.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "The response does not introduce any additional real-world facts, entities, or associations (e.g., company names, products, or people) beyond what is explicitly written in the tweet, even if such information is true or commonly known.",
+          "verdicts": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 1,
+            "ffr": 1,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 1,
+              "bad_passed": 0,
+              "good_failed": 4,
+              "good_passed": 0,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "index": 4,
+      "title": "Entities Explicitly Mentioned",
+      "description": "Each listed entity is explicitly present in the tweet text.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "anthropic/claude-sonnet-5",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "If every entity listed in the response appears verbatim (exact word or name match) in the tweet text, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "If every entity listed in the response corresponds to a real phrase or name that is clearly and directly stated in the tweet, even if slightly reworded or abbreviated, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "If any entity in the response is not explicitly mentioned in the tweet (e.g., inferred, implied, or related but not textually present, such as 'Apple Inc.' or 'California' when not directly named), return False; otherwise, return True.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "index": 5,
+      "title": "Well-Known Entities",
+      "description": "Each entity chosen is a well-known entity identifiable via a reference source like Wikipedia.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "anthropic/claude-sonnet-5",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "Each entity listed in the response corresponds to a real-world, well-known entity that has a dedicated Wikipedia page or equivalent reference source entry.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "Every entity included in the response is broadly recognizable to a general audience, not an obscure or ambiguous reference, such that it could plausibly be found in a standard encyclopedia.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "Strictly verify that each of the up to three entities listed is explicitly findable by name on Wikipedia (i.e., searching the exact entity name returns a dedicated article, not a disambiguation or unrelated page).",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            false,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0.25,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 1,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "index": 6,
+      "title": "Accurate Descriptions",
+      "description": "Each entity's description is factually accurate.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "anthropic/claude-sonnet-5",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "If every entity description in the response contains no factual errors whatsoever about that entity, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "If the overall gist of each entity's description is factually accurate, even if minor details or phrasing are imprecise, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "If at least one entity description contains a factual inaccuracy or misleading claim, return False; otherwise, return True.",
+          "verdicts": [
+            true,
+            false,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0.25,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 1,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "index": 7,
+      "title": "One-Sentence Description",
+      "description": "Each entity description is limited to a single sentence.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "anthropic/claude-sonnet-5",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "Each entity description in the response consists of exactly one sentence, with no entry containing multiple sentences separated by periods or other sentence-ending punctuation.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "Each entity description, regardless of minor punctuation like abbreviations or ellipses, conveys only a single complete thought or idea without a second distinct sentence.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "No entity description contains more than one sentence-ending punctuation mark (such as '.', '!', or '?') that would indicate the presence of two or more sentences.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "index": 8,
+      "title": "Excludes Vision Pro",
+      "description": "The response does not omit or mishandle the product entity \"Vision Pro\" inconsistently with the instructions (e.g., either consistently included or excluded per best entity selection logic).",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "anthropic/claude-sonnet-5",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 1,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "The response includes \"Vision Pro\" as a listed named entity with a one-sentence description, consistent with it being an explicitly mentioned well-known product.",
+          "verdicts": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 1,
+            "ffr": 1,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 1,
+              "bad_passed": 0,
+              "good_failed": 4,
+              "good_passed": 0,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "The response does not treat \"Vision Pro\" inconsistently—it is either clearly included as an entity or clearly and justifiably excluded, but not partially referenced or ambiguously handled.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "The response's handling of \"Vision Pro\" aligns with the instructions' entity selection logic (explicitly mentioned, well-known, identifiable via a reference source like Wikipedia), without arbitrary omission or inconsistent treatment compared to other extracted entities.",
+          "verdicts": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 1,
+            "ffr": 1,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 1,
+              "bad_passed": 0,
+              "good_failed": 4,
+              "good_passed": 0,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "index": 9,
+      "title": "No Redundant Information",
+      "description": "Descriptions avoid unnecessary repetition or filler text beyond what is needed to identify the entity.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "anthropic/claude-sonnet-5",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "Each entity description consists of a single concise sentence with no redundant clauses or repeated information.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "No description restates the entity's name or obvious context (e.g., repeating \"Apple\" when describing \"Tim Cook\") unless necessary for identification.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "anthropic/claude-sonnet-5",
+          "generation_model": "anthropic/claude-sonnet-5",
+          "evaluation_model": "anthropic/claude-sonnet-5",
+          "evaluation_mode": "source",
+          "source": "The response contains no filler phrases, redundant qualifiers, or unnecessary repetition across the entire bulleted list beyond what is strictly required to identify each entity.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 6,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 1,
+              "good_failed": 0,
+              "good_passed": 4,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    }
+  ],
+  "report": {
+    "selection_complete": true,
+    "active_count": 10,
+    "selected_count": 10,
+    "overall": {
+      "coverage": 0,
+      "ffr": 0,
+      "alignment": 0,
+      "complete": true,
+      "known_count": 6,
+      "unknown_count": 0,
+      "confusion": {
+        "bad_failed": 0,
+        "bad_passed": 1,
+        "good_failed": 0,
+        "good_passed": 4,
+        "bad_unknown": 0,
+        "good_unknown": 0
+      }
+    },
+    "set_fails": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  }
+}

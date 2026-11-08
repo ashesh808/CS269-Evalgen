@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Kodak logo concept</title>
+  <rect x="24" y="24" width="464" height="464" rx="104" fill="#ffcb05"/>
+  <path d="M112 99h65v82L278 99h111L256 207l133 108H278l-101-82v82h-65z" fill="#e21b2d"/>
+  <g transform="translate(11 0)" fill="none" stroke="#e21b2d" stroke-width="9" stroke-linecap="square" stroke-linejoin="miter">
+    <path d="M113 364v44m2-22 35-22m-35 22 35 22"/>
+    <rect x="166" y="364" width="40" height="44" rx="19"/>
+    <path d="M223 364v44h13c15 0 25-8 25-22s-10-22-25-22z"/>
+    <path d="m277 408 20-44h5l20 44m-38-14h31"/>
+    <path d="M340 364v44m2-22 36-22m-36 22 36 22"/>
+  </g>
+</svg>
