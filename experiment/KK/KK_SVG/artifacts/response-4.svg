@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 655 220" role="img" aria-labelledby="title desc">
+  <title id="title">Google logo redesign</title>
+  <desc id="desc">A segmented four-color G beside a custom geometric Google wordmark.</desc>
+
+  <g fill="none" stroke-width="17" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M47 82 C57 63 77 50 100 50 C117 50 132 57 143 68" stroke="#EA4335"/>
+    <path d="M47 82 C42 90 40 100 40 110 C40 120 42 130 47 138" stroke="#FBBC04"/>
+    <path d="M47 138 C57 157 77 170 100 170 C118 170 134 163 145 151" stroke="#34A853"/>
+    <path d="M145 151 C155 140 160 126 160 110 H110" stroke="#4285F4"/>
+  </g>
+
+  <g fill="none" stroke="#202124" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M288 79 C279 68 267 63 253 63 C226 63 207 84 207 110 C207 136 227 157 253 157 C270 157 285 150 294 137 V112 H261"/>
+    <circle cx="334" cy="128" r="28"/>
+    <circle cx="405" cy="128" r="28"/>
+    <circle cx="476" cy="128" r="28"/>
+    <path d="M504 128 V157 C504 177 494 187 477 187 C466 187 456 183 450 177"/>
+    <path d="M534 68 V144 C534 152 538 156 546 156"/>
+    <path d="M560 128 H615 C615 111 604 100 588 100 C571 100 560 112 560 128 C560 145 572 156 589 156 C598 156 607 153 613 147"/>
+  </g>
+</svg>

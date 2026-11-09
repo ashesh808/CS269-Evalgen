@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 690 245" role="img" aria-labelledby="title desc">
+  <title id="title">Google, reimagined</title>
+  <desc id="desc">A geometric Google wordmark drawn in luminous blue, red, gold, and green strokes.</desc>
+  <defs>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#3478f6"/>
+      <stop offset="1" stop-color="#5149df"/>
+    </linearGradient>
+    <linearGradient id="red" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fa514f"/>
+      <stop offset="1" stop-color="#df2877"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ffca36"/>
+      <stop offset="1" stop-color="#f39324"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#19ba84"/>
+      <stop offset="1" stop-color="#008b72"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M129.5 60.5A70 70 0 1 0 150 110H103" stroke="url(#blue)"/>
+    <circle cx="213" cy="126" r="45" stroke="url(#red)"/>
+    <circle cx="327" cy="126" r="45" stroke="url(#gold)"/>
+    <g stroke="url(#blue)">
+      <circle cx="441" cy="126" r="45"/>
+      <path d="M486 81v79c0 35-19 57-50 57-14 0-26-4-36-11"/>
+    </g>
+    <path d="M533 43v109c0 13 6 19 19 19" stroke="url(#green)"/>
+    <path d="M574 126h90c0-25-19-45-45-45s-45 20-45 45 19 45 45 45c14 0 26-5 35-14" stroke="url(#red)"/>
+  </g>
+</svg>

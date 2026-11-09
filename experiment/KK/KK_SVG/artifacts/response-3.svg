@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 360" width="880" height="360" role="img" aria-labelledby="title desc">
+  <title id="title">Google logo redesign</title>
+  <desc id="desc">A segmented, four-color G symbol beside a dark contemporary Google wordmark.</desc>
+  <g fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 234.7 109.3 A 100 100 0 0 0 102.4 101.2" stroke="#EA4335"/>
+    <path d="M 85.2 118.4 A 100 100 0 0 0 85.2 241.6" stroke="#FBBC04"/>
+    <path d="M 102.4 258.8 A 100 100 0 0 0 225.6 258.8" stroke="#34A853"/>
+    <path d="M 242.8 241.6 A 100 100 0 0 0 264 180 H 197" stroke="#4285F4"/>
+  </g>
+  <text x="315" y="231" fill="#202124" font-family="Arial, Helvetica, sans-serif" font-size="155" font-weight="700" letter-spacing="-7">Google</text>
+</svg>

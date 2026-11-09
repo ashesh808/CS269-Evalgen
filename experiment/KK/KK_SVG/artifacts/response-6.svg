@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 270" role="img" aria-labelledby="title desc">
+  <title id="title">Google redesign</title>
+  <desc id="desc">A segmented, multicolored G beside a custom geometric Google wordmark.</desc>
+  <g transform="translate(120 130)" fill="none" stroke-width="17" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M49-58 A76 76 0 0 0-23-72" stroke="#EA4335"/>
+    <path d="M-31-69 A76 76 0 0 0-72-25" stroke="#FB8C38"/>
+    <path d="M-75-16 A76 76 0 0 0-62 44" stroke="#FBBC04"/>
+    <path d="M-56 52 A76 76 0 0 0 2 76" stroke="#34A853"/>
+    <path d="M11 75 A76 76 0 0 0 75 12 H22" stroke="#4285F4"/>
+  </g>
+  <g transform="translate(250 69)" fill="none" stroke="#202124" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M94 23 C82 10 65 5 48 5 C20 5 3 28 3 61 C3 95 21 117 49 117 C68 117 83 110 96 98 V67 H57"/>
+    <path d="M159 40 C136 40 123 56 123 79 C123 102 136 117 159 117 C182 117 195 102 195 79 C195 56 182 40 159 40 Z"/>
+    <path d="M255 40 C232 40 219 56 219 79 C219 102 232 117 255 117 C278 117 291 102 291 79 C291 56 278 40 255 40 Z"/>
+    <path d="M389 79 C389 56 376 40 353 40 C330 40 317 56 317 79 C317 102 330 117 353 117 C376 117 389 102 389 79 Z M389 43 V112 C389 139 375 151 352 151 C338 151 326 146 319 137"/>
+    <path d="M423 6 V102 Q423 117 439 117"/>
+    <path d="M466 79 H531 C531 55 519 40 498 40 C475 40 462 56 462 79 C462 102 476 117 499 117 C511 117 522 113 529 105"/>
+  </g>
+</svg>

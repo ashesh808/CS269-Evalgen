@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 55 800 260" role="img" aria-labelledby="title desc">
+  <title id="title">Google, reimagined</title>
+  <desc id="desc">A custom rounded Google wordmark in blue, red, yellow, and green, finished with a small four-color spark.</desc>
+  <g fill="none" stroke-width="23" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="#4285F4" d="M216 111c-12-17-31-26-52-26-43 0-73 32-73 74s30 73 73 73c23 0 43-11 54-27v-40h-45"/>
+    <circle stroke="#EA4335" cx="291" cy="187" r="42"/>
+    <circle stroke="#FBBC04" cx="410" cy="187" r="42"/>
+    <circle stroke="#4285F4" cx="531" cy="187" r="42"/>
+    <path stroke="#4285F4" d="M573 149v86c0 35-18 51-48 51-14 0-26-4-35-11"/>
+    <path stroke="#34A853" d="M619 89v121c0 13 6 19 18 19"/>
+    <path stroke="#EA4335" d="M690 190h80c0-27-14-45-39-45-24 0-42 18-42 42s17 42 44 42c14 0 26-5 35-13"/>
+  </g>
+  <g fill="none" stroke-width="7" stroke-linecap="round">
+    <path stroke="#4285F4" d="M818 139v7"/>
+    <path stroke="#EA4335" d="M828 156h7"/>
+    <path stroke="#FBBC04" d="M818 166v7"/>
+    <path stroke="#34A853" d="M801 156h7"/>
+  </g>
+</svg>

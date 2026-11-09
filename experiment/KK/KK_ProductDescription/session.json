@@ -1,0 +1,2823 @@
+{
+  "schema_version": 1,
+  "exported_at": "2026-11-08T22:48:36.632Z",
+  "session": {
+    "id": null,
+    "status": "complete",
+    "sampled_at": "2026-11-08T21:55:51.037Z"
+  },
+  "prompt": "Write a short product description for RX 9070 XT for an advertisement over competitors. Be creative, and make sure to address the points that makes this produce pops out over competitors",
+  "output_format": "text",
+  "evaluation_mode": "source",
+  "models": {
+    "actual_sample_model": "openai/gpt-6.1-terra",
+    "current_query_model": "openai/gpt-6.1-terra",
+    "current_evaluator_model": "openai/gpt-6.1-terra",
+    "default_model": "openai/gpt-oss-20b"
+  },
+  "settings": {
+    "ffr_threshold": 0.4
+  },
+  "sampling": {
+    "policy": "alternating",
+    "next_high": true,
+    "next_response_index": null,
+    "confidence": [
+      0.2,
+      3.0999999999999996,
+      4.5,
+      1.2000000000000002,
+      4.5,
+      1.4,
+      2.0000000000000004,
+      2.2,
+      2.4,
+      2.6000000000000005
+    ],
+    "known_counts": [
+      30,
+      30,
+      30,
+      30,
+      30,
+      30,
+      30,
+      30,
+      30,
+      30
+    ],
+    "selectivities": [
+      [
+        0.6,
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        0.4
+      ],
+      [
+        0.2,
+        0.3,
+        0.3
+      ],
+      [
+        0.3,
+        0.3,
+        1
+      ],
+      [
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        0.2
+      ],
+      [
+        1,
+        1,
+        0.6
+      ],
+      [
+        1,
+        1,
+        0
+      ],
+      [
+        0.7,
+        0.8,
+        0.8
+      ],
+      [
+        1,
+        1,
+        1
+      ]
+    ]
+  },
+  "summary": {
+    "response_count": 10,
+    "graded_count": 10,
+    "good_count": 3,
+    "bad_count": 7,
+    "ungraded_count": 0,
+    "criterion_count": 10,
+    "active_criterion_count": 10,
+    "selected_criterion_count": 10,
+    "candidate_count": 30,
+    "unknown_verdict_count": 0,
+    "candidate_error_count": 0,
+    "active_in_progress_count": 0
+  },
+  "responses": [
+    {
+      "id": "response-1",
+      "index": 0,
+      "text": "Meet the AMD Radeon RX 9070 XT: your ticket to bigger worlds and bolder visuals. With 16GB of GDDR6 memory, RDNA 4 architecture, and AI-powered FSR 4 upscaling in supported games, it brings the muscle for immersive 1440p and 4K gaming. Turn up the detail, fire up ray tracing, and leave ordinary behind.",
+      "grade": true,
+      "feedback": "",
+      "explanation": "The description highlights the card’s memory, architecture, upscaling, and ray-tracing capabilities without making unsupported claims about specific competitors.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": false,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 2,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "response-2",
+      "index": 1,
+      "text": "**AMD Radeon™ RX 9070 XT: Bring the extraordinary to life.**\n\nTake on the competition with immersive 4K gaming, 16GB of GDDR6 memory, and the power of AMD RDNA™ 4 architecture. Next-generation ray tracing adds stunning realism, while AI-powered AMD FidelityFX™ Super Resolution 4 delivers sharper visuals and smoother gameplay in supported titles. Big performance. Bold visuals. A graphics card built to stand out.",
+      "grade": false,
+      "feedback": "",
+      "explanation": "The description highlights the RX 9070 XT’s 4K gaming capabilities, 16GB memory, ray tracing, and AI-powered upscaling without making unsupported comparisons.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": true,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 2,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "response-3",
+      "index": 2,
+      "text": "**AMD Radeon RX 9070 XT: Turn up the game.**\n\nStand out with AMD RDNA 4 architecture, 16GB of GDDR6 memory, and AI-powered FSR 4 upscaling. From high-refresh 1440p to immersive 4K, enjoy stunning visuals, advanced ray tracing, and the performance to bring your games to life.",
+      "grade": false,
+      "feedback": "",
+      "explanation": "The description highlights the card’s architecture, memory, upscaling, and ray-tracing capabilities without making unsupported claims about competitors.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": true,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 2,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "response-4",
+      "index": 3,
+      "text": "Meet the AMD Radeon RX 9070 XT: built to make every frame count. With 16GB of GDDR6 memory, AMD RDNA 4 architecture, and ray tracing, it brings stunning detail to demanding games. Supported games can go even further with AI-powered AMD FidelityFX Super Resolution 4 upscaling. Big visuals, smooth play, and room to take on your next adventure.",
+      "grade": true,
+      "feedback": "",
+      "explanation": "The description highlights the card’s memory, architecture, ray tracing, and AI-powered upscaling without making unsupported claims about competitors.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": true,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 2,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "response-5",
+      "index": 4,
+      "text": "**AMD Radeon™ RX 9070 XT: Own the frame.**\n\nBring your games to life with next-gen AMD RDNA™ 4 performance, 16GB of GDDR6 memory, and enhanced ray tracing. AMD FSR 4 AI upscaling helps deliver smooth, stunning 4K gaming—so you can turn up the detail and leave ordinary behind.",
+      "grade": false,
+      "feedback": "",
+      "explanation": "The description highlights the card’s key differentiators while keeping the competitive language punchy without making unsupported performance comparisons.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": true,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 2,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "response-6",
+      "index": 5,
+      "text": "Game bigger with the AMD Radeon™ RX 9070 XT. Powered by RDNA™ 4 and armed with 16GB of GDDR6 memory, it delivers stunning 4K gaming, advanced ray tracing, and AI-powered FSR 4 upscaling in supported games. More detail. Smoother action. One serious upgrade.",
+      "grade": true,
+      "feedback": "",
+      "explanation": "The description highlights the card’s memory, 4K gaming capabilities, ray tracing, and AI-powered upscaling without making unsupported claims about competitors.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": true,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 2,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "response-7",
+      "index": 6,
+      "text": "**AMD Radeon RX 9070 XT — Play Bigger.**\n\nTurn up the detail and leave compromise behind. Powered by AMD RDNA 4 architecture, the RX 9070 XT pairs 16GB of GDDR6 memory with immersive ray tracing and AI-powered AMD FidelityFX Super Resolution 4 in supported games. Built for stunning 4K gaming, it brings the power and features to stand out from the pack.",
+      "grade": false,
+      "feedback": "",
+      "explanation": "The description highlights the card’s 16GB memory, RDNA 4 architecture, ray tracing, and FSR 4 support without making unsupported performance claims against specific competitors.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": true,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 2,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "response-8",
+      "index": 7,
+      "text": "**AMD Radeon RX 9070 XT: Bring your A-game to 4K.**\n\nPowered by AMD RDNA 4, the RX 9070 XT combines 16GB of GDDR6 memory with immersive ray tracing and AI-powered FSR 4 upscaling in supported games. It’s built to make your games look stunning and play smoothly—without compromising on next-generation features.",
+      "grade": false,
+      "feedback": "",
+      "explanation": "The description highlights the card’s 16GB memory, 4K gaming capability, ray tracing, and FSR 4 support without making unsupported claims about competitors.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": true,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 2,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "response-9",
+      "index": 8,
+      "text": "**Go bigger with the AMD Radeon™ RX 9070 XT.**\n\nPower your next victory with 4K-ready performance, 16GB of GDDR6 memory, and AMD RDNA™ 4 architecture. With advanced ray tracing and AI-powered AMD FidelityFX™ Super Resolution 4 in supported games, every world feels more vivid and every move more fluid.\n\n**Big visuals. Bold performance. Your game, elevated.**",
+      "grade": false,
+      "feedback": "",
+      "explanation": "The description highlights the RX 9070 XT’s standout gaming features while avoiding unsupported claims that it outperforms specific competitors.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": true,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 2,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "response-10",
+      "index": 9,
+      "text": "**AMD Radeon RX 9070 XT: Bring more to your game.**\n\nStand out with 16GB of GDDR6 memory, AMD RDNA 4 architecture, and advanced ray tracing for breathtaking detail. With AI-powered AMD FidelityFX Super Resolution 4 upscaling in supported games, you’re ready to push your 4K experience further. Play bold.",
+      "grade": false,
+      "feedback": "",
+      "explanation": "The description highlights the card’s key gaming features while avoiding unsupported claims that it outperforms every competitor.",
+      "explanation_status": "provided",
+      "screenshot": null,
+      "screenshot_error": null,
+      "overall_failure": true,
+      "selected_verdicts": [
+        {
+          "criterion_id": 1,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 2,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 3,
+          "candidate_index": 1,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 4,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 5,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 6,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 7,
+          "candidate_index": 2,
+          "enabled": true,
+          "kept": true,
+          "verdict": false,
+          "error": null
+        },
+        {
+          "criterion_id": 8,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 9,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        },
+        {
+          "criterion_id": 10,
+          "candidate_index": 0,
+          "enabled": true,
+          "kept": true,
+          "verdict": true,
+          "error": null
+        }
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "id": 1,
+      "index": 0,
+      "title": "Product Identification",
+      "description": "The response identifies the product as the AMD Radeon RX 9070 XT.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "openai/gpt-6.1-terra",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response explicitly uses the exact product name “AMD Radeon RX 9070 XT,” return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            false,
+            true,
+            true,
+            false,
+            false,
+            true,
+            true,
+            false,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0.42857142857142855,
+            "ffr": 0.3333333333333333,
+            "alignment": 0.5217391304347826,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 3,
+              "bad_passed": 4,
+              "good_failed": 1,
+              "good_passed": 2,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response identifies the product as the RX 9070 XT and associates it with both AMD and the Radeon brand, even if the words are not consecutive, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response clearly identifies the product as AMD’s RX 9070 XT graphics card, even without mentioning Radeon, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "index": 1,
+      "title": "Concise Ad Copy",
+      "description": "The response is a short, self-contained product description suitable for an advertisement.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "openai/gpt-6.1-terra",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response includes a reasonably concise, standalone promotional description of the RX 9070 XT, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response is a brief, self-contained advertisement for the RX 9070 XT without substantial unrelated material, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the entire response consists of one to three sentences of ready-to-use RX 9070 XT ad copy, with no preamble or commentary, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            false,
+            true,
+            false,
+            false
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0.5714285714285714,
+            "ffr": 0.6666666666666666,
+            "alignment": 0.4210526315789474,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 4,
+              "bad_passed": 3,
+              "good_failed": 2,
+              "good_passed": 1,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "index": 2,
+      "title": "Single-Paragraph Format",
+      "description": "The description is presented in one paragraph without a separate headline or closing slogan.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "openai/gpt-6.1-terra",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 1,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response is exactly one uninterrupted paragraph with no line breaks, headline, or slogan, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 1,
+            "ffr": 0.3333333333333333,
+            "alignment": 0.8,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 7,
+              "bad_passed": 0,
+              "good_failed": 1,
+              "good_passed": 2,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the product description is presented as one paragraph without a separate headline or closing slogan, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            false,
+            false,
+            true,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 1,
+            "ffr": 0,
+            "alignment": 1,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 7,
+              "bad_passed": 0,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the description reads as one paragraph with no distinct headline or closing slogan, allowing minor formatting and promotional phrases within the paragraph, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            false,
+            false,
+            true,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 1,
+            "ffr": 0,
+            "alignment": 1,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 7,
+              "bad_passed": 0,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "index": 3,
+      "title": "Plain Formatting",
+      "description": "The response avoids bold text, bullet points, and other prominent Markdown formatting.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "openai/gpt-6.1-terra",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response contains no Markdown formatting of any kind, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            false,
+            false,
+            true,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 1,
+            "ffr": 0,
+            "alignment": 1,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 7,
+              "bad_passed": 0,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response avoids bold text, bullet points, headings, and other prominent Markdown formatting, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            false,
+            false,
+            true,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 1,
+            "ffr": 0,
+            "alignment": 1,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 7,
+              "bad_passed": 0,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response is predominantly plain text, allowing minor or incidental Markdown that does not dominate its presentation, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "index": 4,
+      "title": "Standout Features",
+      "description": "The response highlights relevant features that help the card stand out, such as RDNA 4 architecture, 16GB of GDDR6 memory, ray tracing, or FSR 4.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "openai/gpt-6.1-terra",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response highlights at least one relevant feature that helps the RX 9070 XT stand out from competitors, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response highlights at least two relevant standout features, such as RDNA 4, 16GB of GDDR6 memory, ray tracing, or FSR 4, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response accurately mentions all four of these features—RDNA 4 architecture, 16GB of GDDR6 memory, ray tracing, and FSR 4—return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "index": 5,
+      "title": "Customer Benefits",
+      "description": "The response connects product features to appealing gaming benefits such as visual detail or smoother gameplay.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "openai/gpt-6.1-terra",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response mentions at least one appealing gaming benefit of the RX 9070 XT, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response connects at least one RX 9070 XT feature to a gaming benefit, such as sharper visuals or smoother gameplay, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response explicitly connects at least two distinct RX 9070 XT features to specific gaming benefits, including visual quality and gameplay smoothness, return True; otherwise, return False.",
+          "verdicts": [
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0.7142857142857143,
+            "ffr": 1,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 5,
+              "bad_passed": 2,
+              "good_failed": 3,
+              "good_passed": 0,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "index": 6,
+      "title": "Creative Tone",
+      "description": "The response uses engaging, promotional language rather than reading like a specification sheet.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "openai/gpt-6.1-terra",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 2,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response includes at least one engaging or promotional phrase, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response generally reads like an advertisement rather than a specification sheet, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response consistently uses vivid, creative promotional language to make the RX 9070 XT sound compelling, without relying primarily on a list of specifications, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            true,
+            false
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0.42857142857142855,
+            "ffr": 0.3333333333333333,
+            "alignment": 0.5217391304347826,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 3,
+              "bad_passed": 4,
+              "good_failed": 1,
+              "good_passed": 2,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "index": 7,
+      "title": "Factual Accuracy",
+      "description": "The response makes no false or unsupported claims about the product or its performance relative to competitors.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "openai/gpt-6.1-terra",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response contains no demonstrably false factual claims about the RX 9070 XT, treating obvious advertising hyperbole as nonliteral, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response’s specific product claims are accurate and its comparisons with competitors are supported or appropriately qualified, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If every factual claim, including implied performance advantages and superlatives, is substantiated by evidence in the response, return True; otherwise, return False.",
+          "verdicts": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 1,
+            "ffr": 1,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 7,
+              "bad_passed": 0,
+              "good_failed": 3,
+              "good_passed": 0,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "index": 8,
+      "title": "FSR 4 Qualification",
+      "description": "If the response mentions FSR 4, it makes clear that the feature is available in supported games.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "openai/gpt-6.1-terra",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response mentions FSR 4, return True only if it explicitly says “supported games”; if FSR 4 is not mentioned, return True.",
+          "verdicts": [
+            true,
+            false,
+            false,
+            true,
+            false,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0.42857142857142855,
+            "ffr": 0,
+            "alignment": 0.6,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 3,
+              "bad_passed": 4,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response mentions FSR 4, return True only if it clearly states that the feature is available in supported or compatible games; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            false,
+            true,
+            false,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0.2857142857142857,
+            "ffr": 0,
+            "alignment": 0.4444444444444445,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 2,
+              "bad_passed": 5,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response mentions FSR 4, return True if its wording makes clear, even indirectly, that game support is required; otherwise, return False. If FSR 4 is not mentioned, return True.",
+          "verdicts": [
+            true,
+            true,
+            false,
+            true,
+            false,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0.2857142857142857,
+            "ffr": 0,
+            "alignment": 0.4444444444444445,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 2,
+              "bad_passed": 5,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "index": 9,
+      "title": "Clear Writing",
+      "description": "The response is grammatical, coherent, and easy to understand.",
+      "kind": "llm",
+      "enabled": true,
+      "kept": true,
+      "active": true,
+      "status": "done",
+      "model": "openai/gpt-6.1-terra",
+      "evaluation_mode": "source",
+      "error": null,
+      "selected_index": 0,
+      "candidates": [
+        {
+          "index": 0,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response’s main message is understandable despite minor writing errors, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": true
+        },
+        {
+          "index": 1,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response is generally grammatical, coherent, and easy to understand, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        },
+        {
+          "index": 2,
+          "kind": "llm",
+          "model": "openai/gpt-6.1-terra",
+          "generation_model": "openai/gpt-6.1-terra",
+          "evaluation_model": "openai/gpt-6.1-terra",
+          "evaluation_mode": "source",
+          "source": "If the response is free of grammatical errors, awkward phrasing, and unclear connections between ideas, return True; otherwise, return False.",
+          "verdicts": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "errors": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "complete": true,
+          "unknown_count": 0,
+          "score": {
+            "coverage": 0,
+            "ffr": 0,
+            "alignment": 0,
+            "complete": true,
+            "known_count": 10,
+            "unknown_count": 0,
+            "confusion": {
+              "bad_failed": 0,
+              "bad_passed": 7,
+              "good_failed": 0,
+              "good_passed": 3,
+              "bad_unknown": 0,
+              "good_unknown": 0
+            }
+          },
+          "selected": false
+        }
+      ]
+    }
+  ],
+  "report": {
+    "selection_complete": true,
+    "active_count": 10,
+    "selected_count": 10,
+    "overall": {
+      "coverage": 1,
+      "ffr": 0.6666666666666666,
+      "alignment": 0.5,
+      "complete": true,
+      "known_count": 10,
+      "unknown_count": 0,
+      "confusion": {
+        "bad_failed": 7,
+        "bad_passed": 0,
+        "good_failed": 2,
+        "good_passed": 1,
+        "bad_unknown": 0,
+        "good_unknown": 0
+      }
+    },
+    "set_fails": [
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="25 38 545 165" role="img" aria-labelledby="title desc">
+  <title id="title">Google — a fluid wordmark</title>
+  <desc id="desc">A geometric, rounded Google wordmark in a continuous spectrum of blue, red, yellow, and green, finished with a four-color spark.</desc>
+  <defs>
+    <linearGradient id="spectrum" x1="44" y1="0" x2="532" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4285f4"/>
+      <stop offset="18%" stop-color="#5b6fea"/>
+      <stop offset="30%" stop-color="#ea4335"/>
+      <stop offset="46%" stop-color="#fbbc04"/>
+      <stop offset="62%" stop-color="#4285f4"/>
+      <stop offset="80%" stop-color="#34a853"/>
+      <stop offset="100%" stop-color="#ea4335"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#spectrum)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M137 68 A56 56 0 1 0 149 132 V111 H116"/>
+    <circle cx="203" cy="122" r="34"/>
+    <circle cx="281" cy="122" r="34"/>
+    <circle cx="359" cy="122" r="34"/>
+    <path d="M393 122 V155 C393 178 379 190 360 190 C350 190 340 187 332 182"/>
+    <path d="M425 60 V142 C425 152 429 156 438 156"/>
+    <path d="M466 122 H528 C528 103 515 88 497 88 C477 88 463 103 463 122 C463 142 478 156 497 156 C508 156 517 152 524 145"/>
+  </g>
+  <g>
+    <circle cx="550" cy="64" r="4" fill="#4285f4"/>
+    <circle cx="560" cy="74" r="4" fill="#ea4335"/>
+    <circle cx="550" cy="84" r="4" fill="#fbbc04"/>
+    <circle cx="540" cy="74" r="4" fill="#34a853"/>
+  </g>
+</svg>

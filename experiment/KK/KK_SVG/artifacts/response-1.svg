@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 300" role="img" aria-labelledby="title desc">
+  <title id="title">Google, reimagined</title>
+  <desc id="desc">A segmented, multicolored G symbol beside a rounded, dark wordmark.</desc>
+
+  <!-- A familiar G, opened into four independent strokes. -->
+  <g fill="none" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M170 133 A62 62 0 0 0 153 102" stroke="#4285F4"/>
+    <path d="M141 93 A62 62 0 0 0 81 102" stroke="#EA4335"/>
+    <path d="M71 112 A62 62 0 0 0 70 184" stroke="#FBBC05"/>
+    <path d="M80 195 A62 62 0 0 0 170 169" stroke="#34A853"/>
+    <path d="M128 151 H176 V158" stroke="#4285F4"/>
+  </g>
+
+  <!-- Custom monoline lettering, drawn as paths for portability. -->
+  <g fill="none" stroke="#202124" stroke-width="13" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M326 116 C316 104 303 99 289 101 C267 104 253 123 253 149 C253 175 267 192 288 197 C304 200 319 194 329 182 V153 H303"/>
+    <ellipse cx="383" cy="165" rx="31" ry="32"/>
+    <ellipse cx="465" cy="165" rx="31" ry="32"/>
+    <ellipse cx="546" cy="165" rx="31" ry="32"/>
+    <path d="M577 135 V195 C577 215 565 225 546 225 C535 225 525 222 517 215"/>
+    <path d="M606 101 V181 C606 192 610 197 620 197"/>
+    <path d="M632 166 H692 C692 147 680 134 662 134 C644 134 632 147 632 165 C632 184 645 197 663 197 C674 197 683 193 690 186"/>
+  </g>
+</svg>

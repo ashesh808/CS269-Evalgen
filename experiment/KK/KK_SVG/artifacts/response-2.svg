@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 148" role="img" aria-labelledby="title desc">
+  <title id="title">Google logo redesign</title>
+  <desc id="desc">A four-color, pinwheel-inspired mark beside a modern Google wordmark.</desc>
+  <defs>
+    <path id="blade" d="M 0,-10 C -8,-16 -20,-21 -26,-32 C -32,-43 -25,-54 -14,-54 C -3,-54 6,-43 8,-31 L 10,-13 Z"/>
+  </defs>
+  <g transform="translate(69 74)">
+    <use href="#blade" fill="#4285F4"/>
+    <use href="#blade" fill="#EA4335" transform="rotate(90)"/>
+    <use href="#blade" fill="#FBBC05" transform="rotate(180)"/>
+    <use href="#blade" fill="#34A853" transform="rotate(270)"/>
+  </g>
+  <text x="140" y="97" fill="#202124" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="600" letter-spacing="-3">Google</text>
+</svg>
